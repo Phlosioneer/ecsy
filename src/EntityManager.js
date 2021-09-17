@@ -2,6 +2,7 @@ import { ObjectPool } from "./ObjectPool.js";
 import QueryManager from "./QueryManager.js";
 import EventDispatcher from "./EventDispatcher.js";
 import { SystemStateComponent } from "./SystemStateComponent.js";
+import environment from "./environment.js";
 
 class EntityPool extends ObjectPool {
   constructor(entityManager, entityClass, initialSize) {
@@ -96,7 +97,7 @@ export class EntityManager {
     }
 
     if (~entity._ComponentTypes.indexOf(Component)) {
-      if (process.env.NODE_ENV !== "production") {
+      if (environment !== "production") {
         console.warn(
           "Component type already exists on entity.",
           entity,

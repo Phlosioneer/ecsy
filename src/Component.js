@@ -1,3 +1,5 @@
+import environment from "./environment";
+
 export class Component {
   constructor(props) {
     if (props !== false) {
@@ -17,7 +19,7 @@ export class Component {
         }
       }
 
-      if (process.env.NODE_ENV !== "production" && props !== undefined) {
+      if (environment !== "production" && props !== undefined) {
         this.checkUndefinedAttributes(props);
       }
     }
@@ -37,7 +39,7 @@ export class Component {
     }
 
     // @DEBUG
-    if (process.env.NODE_ENV !== "production") {
+    if (environment !== "production") {
       this.checkUndefinedAttributes(source);
     }
 

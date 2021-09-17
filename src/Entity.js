@@ -1,3 +1,4 @@
+import environment from "./environment.js";
 import Query from "./Query.js";
 import wrapImmutableComponent from "./WrapImmutableComponent.js";
 
@@ -37,7 +38,7 @@ export class Entity {
       component = this._componentsToRemove[Component._typeId];
     }
 
-    return process.env.NODE_ENV !== "production"
+    return environment !== "production"
       ? wrapImmutableComponent(Component, component)
       : component;
   }
@@ -45,7 +46,7 @@ export class Entity {
   getRemovedComponent(Component) {
     const component = this._componentsToRemove[Component._typeId];
 
-    return process.env.NODE_ENV !== "production"
+    return environment !== "production"
       ? wrapImmutableComponent(Component, component)
       : component;
   }
