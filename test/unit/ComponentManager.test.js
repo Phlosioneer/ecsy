@@ -1,8 +1,12 @@
 import test from "ava";
 import { World, Component } from "../../src/index.js";
 import { FooComponent, BarComponent } from "../helpers/components";
+import {loggerSetup, setConsole} from "../helpers/loggerSetup.js";
+
+loggerSetup();
 
 test("registerComponents", (t) => {
+  setConsole(t);
   var world = new World();
 
   world.registerComponent(FooComponent);
@@ -16,6 +20,7 @@ test("registerComponents", (t) => {
 });
 
 test("Register two components with the same name", (t) => {
+  setConsole(t);
   var world = new World();
 
   {

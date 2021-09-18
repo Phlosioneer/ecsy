@@ -19,7 +19,7 @@ export class Component {
         }
       }
 
-      if (environment !== "production" && props !== undefined) {
+      if (environment.isDev && props !== undefined) {
         this.checkUndefinedAttributes(props);
       }
     }
@@ -39,7 +39,7 @@ export class Component {
     }
 
     // @DEBUG
-    if (environment !== "production") {
+    if (environment.isDev) {
       this.checkUndefinedAttributes(source);
     }
 

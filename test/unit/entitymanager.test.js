@@ -1,7 +1,11 @@
 import test from "ava";
 import { Component, World } from "../../src";
+import { loggerSetup, setConsole } from "../helpers/loggerSetup";
+
+loggerSetup();
 
 test("entity id", (t) => {
+  setConsole(t);
   var world = new World();
 
   for (var i = 0; i < 10; i++) {
@@ -14,6 +18,7 @@ test("entity id", (t) => {
 });
 
 test("deferred entity remove", (t) => {
+  setConsole(t);
   var world = new World();
 
   for (let i = 0; i < 10; i++) {
@@ -45,6 +50,7 @@ test("deferred entity remove", (t) => {
 });
 
 test("remove entity clears and reset components first ", (t) => {
+  setConsole(t);
   class MyComponent extends Component {
     constructor() {
       super();

@@ -5,8 +5,13 @@ import {
   BarComponent,
   EmptyComponent,
 } from "../helpers/components";
+import { loggerSetup, setConsole } from "../helpers/loggerSetup.js";
+
+loggerSetup();
+
 /*
 test("Initialize", t => {
+  setConsole(t);
   var world = new World();
 
   class SystemA extends System {}
@@ -49,6 +54,7 @@ test("Initialize", t => {
 */
 
 test("Empty queries", (t) => {
+  setConsole(t);
   var world = new World();
 
   // System 1
@@ -91,6 +97,7 @@ test("Empty queries", (t) => {
 });
 
 test("Queries", (t) => {
+  setConsole(t);
   var world = new World();
 
   world
@@ -146,6 +153,7 @@ test("Queries", (t) => {
 });
 
 test("Queries with 'Not' operator", (t) => {
+  setConsole(t);
   var world = new World();
 
   world
@@ -204,12 +212,12 @@ test("Queries with 'Not' operator", (t) => {
 });
 
 test("Queries with sync removal", (t) => {
+  setConsole(t);
   var world = new World();
 
   world.registerComponent(FooComponent).registerComponent(BarComponent);
 
   // 10 Foo
-  // 10 Bar
   for (var i = 0; i < 10; i++) {
     var entity = world.createEntity();
     entity.addComponent(FooComponent);
@@ -284,6 +292,7 @@ test("Queries with sync removal", (t) => {
 });
 
 test("Queries with deferred removal", (t) => {
+  setConsole(t);
   var world = new World();
 
   world
@@ -315,11 +324,7 @@ test("Queries with deferred removal", (t) => {
 
   class SystemFB extends System {
     execute() {
-      // @todo Instead of removing backward should it work also forward?
-      var entities = this.queries.entities.results;
-      for (let i = entities.length - 1; i >= 0; i--) {
-        entities[i].remove();
-      }
+      var entities = this.queries.entities.results.forEach(entity => entity.remove());
     }
   }
 
@@ -400,6 +405,7 @@ test("Queries with deferred removal", (t) => {
 });
 
 test("Queries removing multiple components", (t) => {
+  setConsole(t);
   var world = new World();
 
   world
@@ -486,6 +492,7 @@ test("Queries removing multiple components", (t) => {
 });
 
 test("Querries removing deferred components", (t) => {
+  setConsole(t);
   var world = new World();
 
   world.registerComponent(FooComponent).registerComponent(BarComponent);
@@ -600,6 +607,7 @@ test("Querries removing deferred components", (t) => {
 });
 
 test("Reactive", (t) => {
+  setConsole(t);
   var world = new World();
 
   class ReactiveSystem extends System {
@@ -709,6 +717,7 @@ test("Reactive", (t) => {
 });
 
 test("Queries with 'mandatory' parameter", (t) => {
+  setConsole(t);
   var counter = {
     a: 0,
     b: 0,
@@ -777,6 +786,7 @@ test("Queries with 'mandatory' parameter", (t) => {
 });
 
 test("Get Systems", (t) => {
+  setConsole(t);
   var world = new World();
 
   class SystemA extends System {}
@@ -795,6 +805,7 @@ test("Get Systems", (t) => {
 });
 
 test("Systems without queries", (t) => {
+  setConsole(t);
   var world = new World();
 
   var counter = 0;
@@ -815,6 +826,7 @@ test("Systems without queries", (t) => {
 });
 
 test("Systems with component case sensitive", (t) => {
+  setConsole(t);
   var world = new World();
 
   class A extends Component {}
@@ -861,6 +873,7 @@ test("Systems with component case sensitive", (t) => {
 });
 
 test("Components with the the same name in uppercase and lowercase", (t) => {
+  setConsole(t);
   class B extends Component {}
 
   class b extends Component {}
@@ -868,7 +881,7 @@ test("Components with the the same name in uppercase and lowercase", (t) => {
   class S extends System {
     execute() {
       this.queries.S.results.forEach((entity) =>
-        console.log(entity.getComponents())
+        Logger.instance.log(entity.getComponents())
       );
     }
   }
@@ -897,6 +910,7 @@ test("Components with the the same name in uppercase and lowercase", (t) => {
 });
 
 test("Unregister systems", (t) => {
+  setConsole(t);
   class SystemA extends System {}
 
   class SystemB extends System {
@@ -919,6 +933,7 @@ test("Unregister systems", (t) => {
 });
 
 test("Register a system that does not extend System", (t) => {
+  setConsole(t);
   class SystemA {}
 
   const world = new World();

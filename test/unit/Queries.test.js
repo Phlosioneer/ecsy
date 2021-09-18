@@ -1,6 +1,9 @@
 import test from "ava";
 import { World, System, Not, Component } from "../../src/index.js";
 import { FooComponent, BarComponent } from "../helpers/components";
+import { loggerSetup, setConsole } from "../helpers/loggerSetup.js";
+
+loggerSetup();
 
 function queriesLength(queries) {
   let result = {};
@@ -14,6 +17,7 @@ function queriesLength(queries) {
 }
 
 test("Reactive queries with Not operator", (t) => {
+  setConsole(t);
   var world = new World();
 
   world.registerComponent(FooComponent).registerComponent(BarComponent);
@@ -124,6 +128,7 @@ test("Reactive queries with Not operator", (t) => {
 });
 
 test("Entity living just within the frame", (t) => {
+  setConsole(t);
   var world = new World();
 
   world.registerComponent(FooComponent);
@@ -211,6 +216,7 @@ test("Entity living just within the frame", (t) => {
 });
 
 test("Two components with the same name get unique queries", (t) => {
+  setConsole(t);
   const world = new World();
 
   // Create two components that have the same name.

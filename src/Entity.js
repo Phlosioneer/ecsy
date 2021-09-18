@@ -38,7 +38,7 @@ export class Entity {
       component = this._componentsToRemove[Component._typeId];
     }
 
-    return environment !== "production"
+    return environment.isDev
       ? wrapImmutableComponent(Component, component)
       : component;
   }
@@ -46,7 +46,7 @@ export class Entity {
   getRemovedComponent(Component) {
     const component = this._componentsToRemove[Component._typeId];
 
-    return environment !== "production"
+    return environment.isDev
       ? wrapImmutableComponent(Component, component)
       : component;
   }

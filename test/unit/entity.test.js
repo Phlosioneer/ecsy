@@ -1,6 +1,10 @@
 import test from "ava";
+import environment from "../../src/environment.js";
 import { World, Component, Types } from "../../src/index.js";
 import { FooComponent, BarComponent } from "../helpers/components";
+import { loggerSetup, setConsole } from "../helpers/loggerSetup.js";
+
+loggerSetup();
 
 /**
  * TODO
@@ -8,6 +12,7 @@ import { FooComponent, BarComponent } from "../helpers/components";
  */
 
 test("adding/removing components sync", async (t) => {
+  setConsole(t);
   var world = new World();
 
   world.registerComponent(FooComponent).registerComponent(BarComponent);
@@ -60,6 +65,7 @@ test("adding/removing components sync", async (t) => {
 });
 
 test("clearing pooled components", async (t) => {
+  setConsole(t);
   var world, entity;
 
   // Component with no constructor
@@ -146,6 +152,7 @@ test("clearing pooled components", async (t) => {
 });
 
 test("removing components deferred", async (t) => {
+  setConsole(t);
   var world = new World();
 
   world.registerComponent(FooComponent).registerComponent(BarComponent);
@@ -182,6 +189,7 @@ test("removing components deferred", async (t) => {
 });
 
 test("remove entity", async (t) => {
+  setConsole(t);
   var world = new World();
 
   // Sync
@@ -196,6 +204,7 @@ test("remove entity", async (t) => {
 });
 
 test("get component development", async (t) => {
+  setConsole(t);
   var world = new World();
 
   world.registerComponent(FooComponent);
@@ -218,8 +227,9 @@ test("get component development", async (t) => {
 });
 
 test("get component production", async (t) => {
-  const oldNodeEnv = process.env.NODE_ENV;
-  process.env.NODE_ENV = "production";
+  setConsole(t);
+  const oldEnv = environment.isDev;
+  environment.isDev = false;
   var world = new World();
 
   world.registerComponent(FooComponent);
@@ -227,7 +237,9 @@ test("get component production", async (t) => {
   // Sync
   var entity = world.createEntity();
   entity.addComponent(FooComponent);
+  t.log("Calling getComponent");
   const component = entity.getComponent(FooComponent);
+  t.log("Call complete");
 
   t.notThrows(() => (component.variableFoo = 4));
 
@@ -240,10 +252,11 @@ test("get component production", async (t) => {
 
   t.notThrows(() => (removedComponent.variableFoo = 14));
 
-  process.env.NODE_ENV = oldNodeEnv;
+  environment.isDev = oldEnv;
 });
 
 test("get removed component development", async (t) => {
+  setConsole(t);
   var world = new World();
 
   world.registerComponent(FooComponent);
@@ -259,8 +272,9 @@ test("get removed component development", async (t) => {
 });
 
 test("get removed component production", async (t) => {
-  const oldNodeEnv = process.env.NODE_ENV;
-  process.env.NODE_ENV = "production";
+  setConsole(t);
+  const oldEnv = environment.isDev;
+  environment.isDev = false;
   var world = new World();
 
   world.registerComponent(FooComponent);
@@ -274,10 +288,11 @@ test("get removed component production", async (t) => {
 
   t.notThrows(() => (component.variableFoo = 4));
 
-  process.env.NODE_ENV = oldNodeEnv;
+  environment.isDev = oldEnv;
 });
 
 test("get mutable component", async (t) => {
+  setConsole(t);
   var world = new World();
 
   world.registerComponent(FooComponent);
@@ -293,6 +308,7 @@ test("get mutable component", async (t) => {
 });
 
 test("Delete entity from entitiesByNames", async (t) => {
+  setConsole(t);
   var world = new World();
 
   // Sync

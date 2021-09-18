@@ -97,7 +97,7 @@ export class EntityManager {
     }
 
     if (~entity._ComponentTypes.indexOf(Component)) {
-      if (environment !== "production") {
+      if (environment.isDev) {
         console.warn(
           "Component type already exists on entity.",
           entity,

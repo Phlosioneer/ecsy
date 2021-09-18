@@ -1,3 +1,2 @@
 
-export default "development";
-//export default "production";
+export default { isDev: true };

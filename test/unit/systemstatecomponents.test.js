@@ -2,8 +2,12 @@
 import test from "ava";
 import { World, Not, System, SystemStateComponent } from "../../src/index.js";
 import { FooComponent } from "../helpers/components";
+import { loggerSetup, setConsole } from "../helpers/loggerSetup.js";
+
+loggerSetup();
 
 test("reset", (t) => {
+  setConsole(t);
   var world = new World();
 
   class StateComponentA extends SystemStateComponent {}

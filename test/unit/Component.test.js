@@ -9,6 +9,7 @@ import {
   Types,
 } from "../../src/Types";
 import { Vector3 } from "../helpers/customtypes";
+import {loggerSetup, setConsole} from "../helpers/loggerSetup";
 
 var CustomTypes = {};
 
@@ -42,7 +43,10 @@ TestComponent.schema = {
   },
 };
 
+loggerSetup();
+
 test("default values", (t) => {
+  setConsole(t);
   const component = new TestComponent();
 
   t.is(component.string, "");
@@ -65,6 +69,7 @@ test("default values", (t) => {
 });
 
 test("copy component", (t) => {
+  setConsole(t);
   const srcComponent = new TestComponent();
   srcComponent.string = "abc";
   srcComponent.number = 1;
@@ -97,6 +102,7 @@ test("copy component", (t) => {
 });
 
 test("clone component", (t) => {
+  setConsole(t);
   const srcComponent = new TestComponent();
   srcComponent.string = "abc";
   srcComponent.number = 1;
@@ -128,6 +134,7 @@ test("clone component", (t) => {
 });
 
 test("unique type ids", (t) => {
+  setConsole(t);
   class ComponentA extends Component {}
   class ComponentB extends Component {}
 
@@ -148,6 +155,7 @@ test("unique type ids", (t) => {
 });
 
 test("registering components before systems", (t) => {
+  setConsole(t);
   class ComponentA extends Component {}
   class ComponentB extends Component {}
 

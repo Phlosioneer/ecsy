@@ -1,8 +1,12 @@
 import test from "ava";
 import { World, System } from "../../src/index.js";
 import { FooComponent, BarComponent } from "../helpers/components";
+import { loggerSetup, setConsole } from "../helpers/loggerSetup.js";
+
+loggerSetup();
 
 test("Stats", async (t) => {
+  setConsole(t);
   var world = new World();
 
   class SystemA extends System {}

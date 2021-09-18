@@ -6,8 +6,12 @@ import {
   Types,
   ObjectPool,
 } from "../../src/index";
+import { loggerSetup, setConsole } from "../helpers/loggerSetup";
+
+loggerSetup();
 
 test("Detecting Pool", (t) => {
+  setConsole(t);
   var world = new World();
 
   class NoPoolComponent extends Component {}
@@ -43,6 +47,7 @@ test("Detecting Pool", (t) => {
 });
 
 test("ObjectPool", (t) => {
+  setConsole(t);
   var id = 0;
 
   class T extends Component {
