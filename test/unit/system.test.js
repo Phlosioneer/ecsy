@@ -324,7 +324,9 @@ test("Queries with deferred removal", (t) => {
 
   class SystemFB extends System {
     execute() {
-      var entities = this.queries.entities.results.forEach(entity => entity.remove());
+      for (var i = this.queries.entities.results.length - 1; i >= 0; i--) {
+        this.queries.entities.results[i].remove();
+      }
     }
   }
 
