@@ -203,6 +203,9 @@ export class EntityManager {
     var index = this._entities.indexOf(entity);
 
     if (!~index) throw new Error("Tried to remove entity not in list");
+    if (!entity.isAlive && this.entitiesToRemove.includes(entity)) {
+      throw new Error("Tried to remove entity not in list")
+    }
 
     entity.alive = false;
     this.entityRemoveAllComponents(entity, immediately);

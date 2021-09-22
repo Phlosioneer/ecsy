@@ -85,3 +85,43 @@ test("remove entity clears and reset components first ", (t) => {
   world.entityManager.processDeferredRemoval();
   t.is(component.isReset, true);
 });
+
+test("double deferred remove throws error", t => {
+  setConsole(t);
+
+  let world = new World();
+  for (let i = 0; i < 10; i++) {
+    world.createEntity();
+  }
+  let testEntity = world.createEntity();
+  for (let i = 0; i < 10; i++) {
+    world.createEntity();
+  }
+  let entities = world.entityManager._entities;
+
+  t.is(entities.length, 21);
+  testEntity.remove();
+  let error = t.throws(() => testEntity.remove());
+  t.is(error.message, "Tried to remove entity not in list");
+  
+});
+
+test("double immediate remove throws error", t => {
+  setConsole(t);
+
+  let world = new World();
+  for (let i = 0; i < 10; i++) {
+    world.createEntity();
+  }
+  let testEntity = world.createEntity();
+  for (let i = 0; i < 10; i++) {
+    world.createEntity();
+  }
+  let entities = world.entityManager._entities;
+
+  t.is(entities.length, 21);
+  testEntity.remove(true);
+  let error = t.throws(() => testEntity.remove(true));
+  t.is(error.message, "Tried to remove entity not in list");
+  
+})
