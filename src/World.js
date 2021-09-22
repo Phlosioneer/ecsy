@@ -4,6 +4,7 @@ import { ComponentManager } from "./ComponentManager.js";
 import { Version } from "./Version.js";
 import { hasWindow, now } from "./Utils.js";
 import { Entity } from "./Entity.js";
+import { Filter } from "./Query.js";
 
 const DEFAULT_OPTIONS = {
   entityPoolSize: 0,
@@ -91,5 +92,9 @@ export class World {
     };
 
     return stats;
+  }
+
+  filter(components) {
+    return new Filter(components).findAll(this.entityManager);
   }
 }

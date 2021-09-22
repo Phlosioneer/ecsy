@@ -35,7 +35,7 @@ export default class QueryManager {
       var query = this._queries[queryName];
 
       if (
-        !!~query.NotComponents.indexOf(Component) &&
+        !!~query.filter.notComponents.indexOf(Component) &&
         ~query.entities.indexOf(entity)
       ) {
         query.removeEntity(entity);
@@ -47,7 +47,7 @@ export default class QueryManager {
       // and Entity has ALL the components of the query
       // and Entity is not already in the query
       if (
-        !~query.Components.indexOf(Component) ||
+        !~query.filter.components.indexOf(Component) ||
         !query.match(entity) ||
         ~query.entities.indexOf(entity)
       )
@@ -67,7 +67,7 @@ export default class QueryManager {
       var query = this._queries[queryName];
 
       if (
-        !!~query.NotComponents.indexOf(Component) &&
+        !!~query.filter.notComponents.indexOf(Component) &&
         !~query.entities.indexOf(entity) &&
         query.match(entity)
       ) {
@@ -76,7 +76,7 @@ export default class QueryManager {
       }
 
       if (
-        !!~query.Components.indexOf(Component) &&
+        !!~query.filter.components.indexOf(Component) &&
         !!~query.entities.indexOf(entity) &&
         !query.match(entity)
       ) {

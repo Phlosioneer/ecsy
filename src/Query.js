@@ -6,20 +6,7 @@ export default class Query {
    * @param {Array(Component)} Components List of types of components to query
    */
   constructor(Components, manager) {
-    this.Components = [];
-    this.NotComponents = [];
-
-    Components.forEach((component) => {
-      if (typeof component === "object") {
-        this.NotComponents.push(component.Component);
-      } else {
-        this.Components.push(component);
-      }
-    });
-
-    if (this.Components.length === 0) {
-      throw new Error("Can't create a query without components");
-    }
+    this.filter = new Filter(Components);
 
     this.entities = [];
 
@@ -31,14 +18,8 @@ export default class Query {
     this.key = queryKey(Components);
 
     // Fill the query with the existing entities
-    for (var i = 0; i < manager._entities.length; i++) {
-      var entity = manager._entities[i];
-      if (this.match(entity)) {
-        // @todo ??? this.addEntity(entity); => preventing the event to be generated
-        entity.queries.push(this);
-        this.entities.push(entity);
-      }
-    }
+    this.entities = this.filter.findAll(manager);
+    this.entities.forEach(entity => entity.queries.push(this));
   }
 
   /**
@@ -72,10 +53,7 @@ export default class Query {
   }
 
   match(entity) {
-    return (
-      entity.hasAllComponents(this.Components) &&
-      !entity.hasAnyComponents(this.NotComponents)
-    );
+    return this.filter.isMatch(entity);
   }
 
   toJSON() {
@@ -95,7 +73,7 @@ export default class Query {
    */
   stats() {
     return {
-      numComponents: this.Components.length,
+      numComponents: this.filter.components.length,
       numEntities: this.entities.length,
     };
   }
@@ -104,3 +82,36 @@ export default class Query {
 Query.prototype.ENTITY_ADDED = "Query#ENTITY_ADDED";
 Query.prototype.ENTITY_REMOVED = "Query#ENTITY_REMOVED";
 Query.prototype.COMPONENT_CHANGED = "Query#COMPONENT_CHANGED";
+
+export class Filter {
+  constructor(components) {
+    this.components = [];
+    this.notComponents = [];
+
+    components.forEach((component) => {
+      if (typeof component === "object") {
+        this.notComponents.push(component.Component);
+      } else {
+        this.components.push(component);
+      }
+    });
+
+    if (this.components.length === 0) {
+      throw new Error("Can't create a query without components");
+    }
+  }
+
+  isMatch(entity) {
+    return (
+      entity.hasAllComponents(this.components) &&
+      !entity.hasAnyComponents(this.notComponents)
+    );
+  }
+
+  findAll(entityManager) {
+    return entityManager._entities.filter(entity => this.isMatch(entity));
+  }
+}
+
+
+
