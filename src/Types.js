@@ -18,6 +18,10 @@ import environment from "./environment";
  */
 
 /**
+ * Copy something by value.
+ * 
+ * Identical to cloning for simple values, like strings.
+ * 
  * @template T
  * @param {T} src 
  * @returns T
@@ -25,6 +29,8 @@ import environment from "./environment";
 export const copyValue = (src) => src;
 
 /**
+ * Clone something by value.
+ * 
  * @template T
  * @param {T} src 
  * @returns T
@@ -32,10 +38,17 @@ export const copyValue = (src) => src;
 export const cloneValue = (src) => src;
 
 /**
- * @template T
- * @param {T[]} src 
- * @param {T[]?} dest 
- * @returns {T[]}
+ * Copy an array, reusing every element of the original array (a "shallow" copy).
+ * 
+ * If a destination is given, that array is reused for the copy. Otherwise, the original
+ * is cloned.
+ * 
+ * This function is safe to use with `null` and `undefined`.
+ * 
+ * @template T The type of each element in the array, can be `any`.
+ * @param {T[]} src The array to copy.
+ * @param {T[]} [dest] Optional array to reuse.
+ * @returns {T[]} The new array, or `dest` if it was given.
  */
 export const copyArray = (src, dest) => {
   if (!src) {
@@ -56,6 +69,10 @@ export const copyArray = (src, dest) => {
 };
 
 /**
+ * Clone an array, reusing each element of the original array (a "shallow" clone).
+ * 
+ * This function is safe to use with `null` and `undefined`.
+ * 
  * @template T
  * @param {T[]} src 
  * @returns {T[]}
@@ -63,6 +80,13 @@ export const copyArray = (src, dest) => {
 export const cloneArray = (src) => src && src.slice();
 
 /**
+ * Expensive way to create a "deep" copy of an object or array of objects.
+ * 
+ * There is no way to reuse an object for JSON.parse, so this is equivalent
+ * to `cloneJSON`.
+ * 
+ * This function is safe to use with `null` but is NOT safe with `undefined`.
+ * 
  * @template T
  * @param {T} src 
  * @returns {T}
@@ -70,6 +94,10 @@ export const cloneArray = (src) => src && src.slice();
 export const copyJSON = (src) => JSON.parse(JSON.stringify(src));
 
 /**
+ * Expensive way to create a "deep" clone of an object or array of objects.
+ * 
+ * This function is safe to use with `null` but is NOT safe with `undefined`.
+ * 
  * @template T
  * @param {T} src 
  * @returns {T}
@@ -77,10 +105,17 @@ export const copyJSON = (src) => JSON.parse(JSON.stringify(src));
 export const cloneJSON = (src) => JSON.parse(JSON.stringify(src));
 
 /**
- * @template {{copy: (T) => T, clone: (T) => T}} T
- * @param {T} src 
- * @param {T} dest 
- * @returns {T}
+ * Copy an object that has its own `copy` and `clone` functions.
+ * 
+ * If a destination is provided, this is equivalent to `dest.copy(src)`.
+ * Otherwise, it's equivalent to `src.clone()`.
+ * 
+ * This function is safe to use with `null` and `undefined`.
+ * 
+ * @template {{copy: (src: T) => T, clone: () => T}} T A type with copy and clone functions
+ * @param {T} src The object to copy
+ * @param {T} [dest] An object to reuse for copying
+ * @returns {T} The new object, or `dest` if it was provided.
  */
 export const copyCopyable = (src, dest) => {
   if (!src) {
@@ -95,7 +130,11 @@ export const copyCopyable = (src, dest) => {
 };
 
 /**
- * @template {{ clone: (T) => T}} T
+ * Clone an object that has its own `clone` function.
+ *
+ * This function is safe to use with `null` and `undefined`.
+ * 
+ * @template {{ clone: () => T}} T A type with a clone function
  * @param {T} src 
  * @returns {T}
  */
@@ -128,11 +167,18 @@ export function createType(typeDefinition) {
 }
 
 class EntityRef {
-  constructor() {
+  /**
+   * @param {Entity} [entity] The initial entity to reference
+   */
+  constructor(entity) {
     /** @type {number?} */
     this.targetId = null;
     /** @type {import("./Entity").Entity?} */
     this._target = null;
+
+    if (entity) {
+      this.entity = entity;
+    }
   }
 
   /**
@@ -192,7 +238,7 @@ class EntityRef {
   }
 
   /**
-   * Make `thi` a copy of `other`.
+   * Make `this` a copy of `other`.
    * @param {EntityRef} other 
    */
   copy(other) {
