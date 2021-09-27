@@ -3,10 +3,34 @@ import QueryManager from "./QueryManager.js";
 import EventDispatcher from "./EventDispatcher.js";
 import { SystemStateComponent } from "./SystemStateComponent.js";
 import environment from "./environment.js";
+import { Entity } from "./Entity";
 
-class EntityPool extends ObjectPool {
+/**
+ * Imported
+ * @template {import("./Component").Component} C
+ * @typedef {import("./Component").ComponentConstructor<C>} ComponentConstructor<C>
+ */
+
+
+
+/**
+ * @extends {ObjectPool<Entity>}
+ */
+export class EntityPool extends ObjectPool {
+  /**
+   * 
+   * @param {EntityManager} entityManager 
+   * @param {(new(manager: EntityManager) => Entity) & typeof Entity} entityClass 
+   * @param {number} initialSize 
+   */
   constructor(entityManager, entityClass, initialSize) {
+    // Need to prevent the superclass from calling expand() before saving
+    // entityManager.
     super(entityClass, undefined);
+
+    /**
+     * @type {EntityManager}
+     */
     this.entityManager = entityManager;
 
     if (typeof initialSize !== "undefined") {
@@ -14,9 +38,12 @@ class EntityPool extends ObjectPool {
     }
   }
 
+  /**
+   * @param {number} count 
+   */
   expand(count) {
     for (var n = 0; n < count; n++) {
-      var clone = new this.T(this.entityManager);
+      var clone = new this.Type(this.entityManager);
       clone._pool = this;
       this.freeList.push(clone);
     }
@@ -26,39 +53,86 @@ class EntityPool extends ObjectPool {
 
 /**
  * @private
- * @class EntityManager
  */
 export class EntityManager {
+  /**
+   * 
+   * @param {import("./World").World} world 
+   */
   constructor(world) {
+    /**
+     * @type {import("./World").World}
+     */
     this.world = world;
+
+    /**
+     * @type {import("./ComponentManager").ComponentManager}
+     */
     this.componentsManager = world.componentsManager;
 
-    // All the entities in this instance
+    /**
+     * All the entities in this instance
+     * @type {Entity[]}
+     */
     this._entities = [];
+
+    /**
+     * @type {number}
+     */
     this._nextEntityId = 0;
 
+    /**
+     * @type {{[name: string]: Entity}}
+     */
     this._entitiesByNames = {};
 
-    this._queryManager = new QueryManager(this);
+    /**
+     * @type {QueryManager}
+     */
+    this._queryManager = new QueryManager(this.world);
+
+    /**
+     * @type {EventDispatcher<ComponentConstructor<any>>}
+     */
     this.eventDispatcher = new EventDispatcher();
+
+    /**
+     * @type {EntityPool}
+     */
     this._entityPool = new EntityPool(
       this,
       this.world.options.entityClass,
       this.world.options.entityPoolSize
     );
 
-    // Deferred deletion
+    /**
+     * Deferred deletion of components
+     * @type {Entity[]}
+     */
     this.entitiesWithComponentsToRemove = [];
+    /**
+     * Deferred deletion of entities
+     * @type {Entity[]}
+     */
     this.entitiesToRemove = [];
+    /**
+     * @type {boolean}
+     */
     this.deferredRemovalEnabled = true;
   }
 
+  /**
+   * 
+   * @param {string} name
+   * @returns {Entity?}
+   */
   getEntityByName(name) {
     return this._entitiesByNames[name];
   }
 
   /**
    * Create a new entity
+   * @param {string} [name]
    */
   createEntity(name) {
     var entity = this._entityPool.acquire();
@@ -66,7 +140,7 @@ export class EntityManager {
     entity.name = name || "";
     if (name) {
       if (this._entitiesByNames[name]) {
-        console.warn(`Entity name '${name}' already exist`);
+        console.warn(`Entity name '${name}' already exists; preserving the old entity`);
       } else {
         this._entitiesByNames[name] = entity;
       }
@@ -82,13 +156,13 @@ export class EntityManager {
   /**
    * Add a component to an entity
    * @param {Entity} entity Entity where the component will be added
-   * @param {Component} Component Component to be added to the entity
-   * @param {Object} values Optional values to replace the default attributes
+   * @param {ComponentConstructor<any>} Component Component to be added to the entity
+   * @param {object} [values] Optional values to replace the default attributes
    */
   entityAddComponent(entity, Component, values) {
     // @todo Probably define Component._typeId with a default value and avoid using typeof
     if (
-      typeof Component._typeId === "undefined" &&
+      typeof Component._typeId !== "undefined" &&
       !this.world.componentsManager._ComponentsMap[Component._typeId]
     ) {
       throw new Error(
@@ -109,7 +183,7 @@ export class EntityManager {
 
     entity._ComponentTypes.push(Component);
 
-    if (Component.__proto__ === SystemStateComponent) {
+    if (Object.getPrototypeOf(Component) === SystemStateComponent) {
       entity.numStateComponents++;
     }
 
@@ -136,8 +210,8 @@ export class EntityManager {
   /**
    * Remove a component from an entity
    * @param {Entity} entity Entity which will get removed the component
-   * @param {*} Component Component to remove from the entity
-   * @param {Bool} immediately If you want to remove the component immediately instead of deferred (Default is false)
+   * @param {ComponentConstructor<any>} Component Component to remove from the entity
+   * @param {boolean} [immediately] If you want to remove the component immediately instead of deferred (Default is false)
    */
   entityRemoveComponent(entity, Component, immediately) {
     var index = entity._ComponentTypes.indexOf(Component);
@@ -162,7 +236,7 @@ export class EntityManager {
     // Check each indexed query to see if we need to remove it
     this._queryManager.onEntityComponentRemoved(entity, Component);
 
-    if (Component.__proto__ === SystemStateComponent) {
+    if (Object.getPrototypeOf(Component) === SystemStateComponent) {
       entity.numStateComponents--;
 
       // Check if the entity was a ghost waiting for the last system state component to be removed
@@ -172,6 +246,12 @@ export class EntityManager {
     }
   }
 
+  /**
+   * 
+   * @param {Entity} entity 
+   * @param {ComponentConstructor<any>} Component 
+   * @param {number} index 
+   */
   _entityRemoveComponentSync(entity, Component, index) {
     // Remove T listing on entity and property ref, then free the component.
     entity._ComponentTypes.splice(index, 1);
@@ -184,12 +264,13 @@ export class EntityManager {
   /**
    * Remove all the components from an entity
    * @param {Entity} entity Entity from which the components will be removed
+   * @param {boolean} [immediately]
    */
   entityRemoveAllComponents(entity, immediately) {
     let Components = entity._ComponentTypes;
 
     for (let j = Components.length - 1; j >= 0; j--) {
-      if (Components[j].__proto__ !== SystemStateComponent)
+      if (Object.getPrototypeOf(Components[j]) !== SystemStateComponent)
         this.entityRemoveComponent(entity, Components[j], immediately);
     }
   }
@@ -197,13 +278,13 @@ export class EntityManager {
   /**
    * Remove the entity from this manager. It will clear also its components
    * @param {Entity} entity Entity to remove from the manager
-   * @param {Bool} immediately If you want to remove the component immediately instead of deferred (Default is false)
+   * @param {boolean} [immediately] If you want to remove the component immediately instead of deferred (Default is false)
    */
   removeEntity(entity, immediately) {
     var index = this._entities.indexOf(entity);
 
     if (!~index) throw new Error("Tried to remove entity not in list");
-    if (!entity.isAlive && this.entitiesToRemove.includes(entity)) {
+    if (!entity.alive && this.entitiesToRemove.includes(entity)) {
       throw new Error("Tried to remove entity not in list")
     }
 
@@ -222,6 +303,11 @@ export class EntityManager {
     }
   }
 
+  /**
+   * 
+   * @param {Entity} entity 
+   * @param {number} index 
+   */
   _releaseEntity(entity, index) {
     this._entities.splice(index, 1);
 
@@ -271,9 +357,9 @@ export class EntityManager {
 
   /**
    * Get a query based on a list of components
-   * @param {Array(Component)} Components List of components that will form the query
+   * @param {import("./Query.js").LogicalComponent[]} Components List of components that will form the query
    */
-  queryComponents(Components) {
+  getQueryByComponents(Components) {
     return this._queryManager.getQuery(Components);
   }
 
@@ -290,6 +376,18 @@ export class EntityManager {
    * Return some stats
    */
   stats() {
+    /**
+     * @type {{
+     *  numEntities: number,
+     *  numQueries: number,
+     *  queries: ReturnType<QueryManager["stats"]>,
+     *  numComponentPool: number,
+     *  componentPool: {
+     *    [name: string]: ReturnType<ObjectPool["stats"]>
+     *  },
+     *  eventDispatcher: EventDispatcher["stats"]
+     * }}
+     */
     var stats = {
       numEntities: this._entities.length,
       numQueries: Object.keys(this._queryManager._queries).length,
@@ -302,10 +400,8 @@ export class EntityManager {
 
     for (var ecsyComponentId in this.componentsManager._componentPool) {
       var pool = this.componentsManager._componentPool[ecsyComponentId];
-      stats.componentPool[pool.T.getName()] = {
-        used: pool.totalUsed(),
-        size: pool.count,
-      };
+      let componentType = (/** @type {ComponentConstructor<any>} */ (pool.Type));
+      stats.componentPool[componentType.getName()] = pool.stats();
     }
 
     return stats;

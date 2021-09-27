@@ -1,10 +1,26 @@
+
 /**
- * @private
- * @class EventDispatcher
+ * @template T
+ * @typedef {(
+ *  dispatcher: EventDispatcher,
+ *  entity: import("./Entity").Entity?,
+ *  data: T?
+ * ) => void} EventListener<T>
+ */
+
+/**
+ * @template T The extra data that might be included in an event
  */
 export default class EventDispatcher {
   constructor() {
+    /**
+     * @type {{ [eventName: string]: EventListener<T>[] }}
+     */
     this._listeners = {};
+
+    /**
+     * @type {{ fired: number, handled: number }}
+     */
     this.stats = {
       fired: 0,
       handled: 0,
@@ -14,7 +30,7 @@ export default class EventDispatcher {
   /**
    * Add an event listener
    * @param {String} eventName Name of the event to listen
-   * @param {Function} listener Callback to trigger when the event is fired
+   * @param {EventListener<T>} listener Callback to trigger when the event is fired
    */
   addEventListener(eventName, listener) {
     let listeners = this._listeners;
@@ -30,7 +46,7 @@ export default class EventDispatcher {
   /**
    * Check if an event listener is already added to the list of listeners
    * @param {String} eventName Name of the event to check
-   * @param {Function} listener Callback for the specified event
+   * @param {EventListener<T>} listener Callback for the specified event
    */
   hasEventListener(eventName, listener) {
     return (
@@ -42,7 +58,7 @@ export default class EventDispatcher {
   /**
    * Remove an event listener
    * @param {String} eventName Name of the event to remove
-   * @param {Function} listener Callback for the specified event
+   * @param {EventListener<T>} listener Callback for the specified event
    */
   removeEventListener(eventName, listener) {
     var listenerArray = this._listeners[eventName];
@@ -57,18 +73,20 @@ export default class EventDispatcher {
   /**
    * Dispatch an event
    * @param {String} eventName Name of the event to dispatch
-   * @param {Entity} entity (Optional) Entity to emit
-   * @param {Component} component
+   * @param {import("./Entity").Entity} [entity] (Optional) Entity to emit
+   * @param {T} [data]
    */
-  dispatchEvent(eventName, entity, component) {
+  dispatchEvent(eventName, entity, data) {
     this.stats.fired++;
 
     var listenerArray = this._listeners[eventName];
     if (listenerArray !== undefined) {
+      // Make a copy of the array, to prevent mutation by listeners (such as
+      // listeners removing themselves)
       var array = listenerArray.slice(0);
 
       for (var i = 0; i < array.length; i++) {
-        array[i].call(this, entity, component);
+        array[i].call(this, entity, data);
       }
     }
   }

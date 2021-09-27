@@ -1,5 +1,6 @@
 import test from "ava";
 import { World, System, Not, Component } from "../../src/index.js";
+import { queryKey } from "../../src/Utils.js";
 import { FooComponent, BarComponent } from "../helpers/components";
 import { loggerSetup, setConsole } from "../helpers/loggerSetup.js";
 
@@ -250,4 +251,22 @@ test("Two components with the same name get unique queries", (t) => {
 
   t.is(query1Entity.id, entity1.id);
   t.is(query2Entity.id, entity2.id);
+});
+
+
+test("Query keys are order-independent", t => {
+  setConsole(t);
+  
+  const world = new World();
+  
+  world.registerComponent(FooComponent)
+    .registerComponent(BarComponent);
+  
+  const keyFB = queryKey([FooComponent, BarComponent], world);
+  const keyBF = queryKey([BarComponent, FooComponent], world);
+  t.is(keyFB, keyBF);
+  
+  const keyNFB = queryKey([Not(FooComponent), BarComponent], world);
+  const keyBNF = queryKey([BarComponent, Not(FooComponent)], world);
+  t.is(keyNFB, keyBNF);
 });

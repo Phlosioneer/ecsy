@@ -25,7 +25,7 @@ test("adding/removing components sync", async (t) => {
   t.true(entity.hasComponent(FooComponent));
   t.false(entity.hasComponent(BarComponent));
   t.deepEqual(
-    Object.values(entity.getComponents()).map((comp) => comp.constructor),
+    Object.values(entity._components).map((comp) => comp.constructor),
     [FooComponent]
   );
 
@@ -38,7 +38,7 @@ test("adding/removing components sync", async (t) => {
   t.true(entity.hasComponent(BarComponent));
   t.true(entity.hasAllComponents([FooComponent, BarComponent]));
   t.deepEqual(
-    Object.values(entity.getComponents()).map((comp) => comp.constructor),
+    Object.values(entity._components).map((comp) => comp.constructor),
     [FooComponent, BarComponent]
   );
 
@@ -48,7 +48,7 @@ test("adding/removing components sync", async (t) => {
   t.true(entity.hasComponent(BarComponent));
   t.false(entity.hasAllComponents([FooComponent, BarComponent]));
   t.deepEqual(
-    Object.values(entity.getComponents()).map((comp) => comp.constructor),
+    Object.values(entity._components).map((comp) => comp.constructor),
     [BarComponent]
   );
 
@@ -59,22 +59,24 @@ test("adding/removing components sync", async (t) => {
   t.false(entity.hasComponent(BarComponent));
   t.false(entity.hasAllComponents([FooComponent, BarComponent]));
   t.deepEqual(
-    Object.values(entity.getComponents()).map((comp) => comp.constructor),
+    Object.values(entity._components).map((comp) => comp.constructor),
     []
   );
 });
 
+// Component with no constructor
+class BazComponent extends Component {}
+
+/** @type {string} */
+BazComponent.prototype.spam;
+
+BazComponent.schema = {
+  spam: { type: Types.String },
+};
+
 test("clearing pooled components", async (t) => {
   setConsole(t);
   var world, entity;
-
-  // Component with no constructor
-
-  class BazComponent extends Component {}
-
-  BazComponent.schema = {
-    spam: { type: Types.String },
-  };
 
   world = new World();
   world.registerComponent(BazComponent);
@@ -169,11 +171,11 @@ test("removing components deferred", async (t) => {
   t.false(entity.hasComponent(FooComponent));
   t.false(entity.hasComponent(BarComponent));
   t.deepEqual(
-    Object.values(entity.getComponents()).map((comp) => comp.constructor),
+    Object.values(entity._components).map((comp) => comp.constructor),
     []
   );
   t.deepEqual(
-    Object.values(entity.getComponentsToRemove()).map(
+    Object.values(entity._componentsToRemove).map(
       (comp) => comp.constructor
     ),
     [FooComponent]
@@ -183,7 +185,7 @@ test("removing components deferred", async (t) => {
   t.is(entity.getComponentTypes().length, 0);
   t.false(entity.hasComponent(FooComponent));
   t.deepEqual(
-    Object.values(entity.getComponents()).map((comp) => comp.constructor),
+    Object.values(entity._components).map((comp) => comp.constructor),
     []
   );
 });

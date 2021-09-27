@@ -1,21 +1,46 @@
+import { Component } from "./Component.js";
+import { Entity } from "./Entity.js";
+import { EntityManager } from "./EntityManager.js";
 import EventDispatcher from "./EventDispatcher.js";
 import { queryKey } from "./Utils.js";
 
-export default class Query {
+/**
+ * Imported
+ * @typedef {import("./Component.js").LogicalComponent} LogicalComponent
+ */
+
+export class Query {
   /**
-   * @param {Array(Component)} Components List of types of components to query
+   * @param {LogicalComponent[]
+   *    } Components List of types of components to query
+   * @param {EntityManager} manager
    */
   constructor(Components, manager) {
+    /**
+     * @type {Filter}
+     */
     this.filter = new Filter(Components);
 
+    /**
+     * @type {Entity[]}
+     */
     this.entities = [];
 
+    /**
+     * @type {EventDispatcher<Component>}
+     */
     this.eventDispatcher = new EventDispatcher();
 
-    // This query is being used by a reactive system
+    /**
+     * This query is being used by a reactive system
+     * @type {boolean}
+     */
     this.reactive = false;
 
-    this.key = queryKey(Components);
+    /**
+     * @type {import("./Types").QueryKey}
+     */
+    this.key = queryKey(Components, manager.world);
 
     // Fill the query with the existing entities
     this.entities = this.filter.findAll(manager);
@@ -52,6 +77,10 @@ export default class Query {
     }
   }
 
+  /**
+   * 
+   * @param {Entity} entity
+   */
   match(entity) {
     return this.filter.isMatch(entity);
   }
@@ -61,8 +90,8 @@ export default class Query {
       key: this.key,
       reactive: this.reactive,
       components: {
-        included: this.Components.map((C) => C.name),
-        not: this.NotComponents.map((C) => C.name),
+        included: this.filter.components.map((C) => C.name),
+        not: this.filter.notComponents.map((C) => C.name),
       },
       numEntities: this.entities.length,
     };
@@ -83,7 +112,20 @@ Query.prototype.ENTITY_ADDED = "Query#ENTITY_ADDED";
 Query.prototype.ENTITY_REMOVED = "Query#ENTITY_REMOVED";
 Query.prototype.COMPONENT_CHANGED = "Query#COMPONENT_CHANGED";
 
+/**
+ * @enum {string}
+ */
+ export const QueryEvents = {
+  added: Query.prototype.ENTITY_ADDED,
+  removed: Query.prototype.ENTITY_REMOVED,
+  changed: Query.prototype.COMPONENT_CHANGED, // Query.prototype.ENTITY_CHANGED
+};
+
 export class Filter {
+  /**
+   * 
+   * @param {LogicalComponent[]} components 
+   */
   constructor(components) {
     this.components = [];
     this.notComponents = [];
@@ -101,6 +143,10 @@ export class Filter {
     }
   }
 
+  /**
+   * 
+   * @param {Entity} entity 
+   */
   isMatch(entity) {
     return (
       entity.hasAllComponents(this.components) &&
@@ -108,6 +154,10 @@ export class Filter {
     );
   }
 
+  /**
+   * 
+   * @param {EntityManager} entityManager 
+   */
   findAll(entityManager) {
     return entityManager._entities.filter(entity => this.isMatch(entity));
   }

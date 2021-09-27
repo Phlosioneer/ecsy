@@ -1,5 +1,10 @@
+
+/**
+ * @type {WeakMap<import("./Component").Component, Proxy<import("./Component").Component>>}
+ */
 const proxyMap = new WeakMap();
 
+/** @type {ProxyHandler<any>} */
 const proxyHandler = {
   set(target, prop) {
     throw new Error(
@@ -10,6 +15,14 @@ const proxyHandler = {
   },
 };
 
+/**
+ * Returns a Proxy<C> that does not allow the modification of any fields.
+ * 
+ * @template {import("./Component").Component} C
+ * @param {import("./Component").ComponentConstructor<C>} T
+ * @param {C} component
+ * @returns {C}
+ */
 export default function wrapImmutableComponent(T, component) {
   if (component === undefined) {
     return undefined;
@@ -22,5 +35,5 @@ export default function wrapImmutableComponent(T, component) {
     proxyMap.set(component, wrappedComponent);
   }
 
-  return wrappedComponent;
+  return /** @type {C} */ ( /** @type {any} */ (wrappedComponent));
 }

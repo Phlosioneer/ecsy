@@ -61,11 +61,13 @@ test("Empty queries", (t) => {
   class SystemEmpty1 extends System {}
 
   // System 2
+
   class SystemEmpty2 extends System {}
 
   SystemEmpty2.queries = {};
 
   // System 3
+
   class SystemEmpty3 extends System {}
 
   SystemEmpty3.queries = {
@@ -86,11 +88,13 @@ test("Empty queries", (t) => {
   t.deepEqual(world.systemManager.getSystem(SystemEmpty2).queries, {});
 
   const error = t.throws(() => {
+    // @ts-ignore
     world.registerSystem(SystemEmpty3);
   });
 
   t.is(error.message, "'components' attribute can't be empty in a query");
   const error2 = t.throws(() => {
+    // @ts-ignore
     world.registerSystem(SystemEmpty4);
   });
   t.is(error2.message, "'components' attribute can't be empty in a query");
@@ -272,7 +276,7 @@ test("Queries with sync removal", (t) => {
   // Sync standard remove invalid loop
   t.is(entitiesA.length, 10);
 
-  systemA.execute();
+  systemA.execute(0, 0);
 
   // Just removed half because of the sync update of the array that throws an exception
   t.is(entitiesA.length, 5);
@@ -281,7 +285,7 @@ test("Queries with sync removal", (t) => {
   // Sync standard remove with stored length on invalid loop
   t.is(entitiesB.length, 5);
   const error = t.throws(() => {
-    systemB.execute();
+    systemB.execute(0, 0);
   });
 
   t.is(error.message, "Cannot read property 'remove' of undefined");
@@ -572,7 +576,7 @@ test("Querries removing deferred components", (t) => {
   t.is(entitiesB.length, 4);
 
   //world.execute();
-  systemF.execute();
+  systemF.execute(0, 0);
 
   // [-F,F,FB,FB,B,B]
   // [F, FB,FB,B, B]
@@ -592,7 +596,7 @@ test("Querries removing deferred components", (t) => {
   // Force remove on systemB
   // [F, F-B,F-B, B, B]
   // [F, F, F]
-  systemFB.execute();
+  systemFB.execute(0, 0);
 
   t.is(entitiesF.length, 3);
   t.is(entitiesFB.length, 0);
@@ -626,11 +630,11 @@ test("Reactive", (t) => {
       },
     },
   };
+  
+  world.registerComponent(FooComponent).registerComponent(BarComponent);
 
   // Register empty system
   world.registerSystem(ReactiveSystem);
-
-  world.registerComponent(FooComponent).registerComponent(BarComponent);
 
   for (var i = 0; i < 15; i++) {
     world.createEntity().addComponent(FooComponent).addComponent(BarComponent);
@@ -883,7 +887,7 @@ test("Components with the the same name in uppercase and lowercase", (t) => {
   class S extends System {
     execute() {
       this.queries.S.results.forEach((entity) =>
-        Logger.instance.log(entity.getComponents())
+        console.log(entity._components)
       );
     }
   }
@@ -898,7 +902,7 @@ test("Components with the the same name in uppercase and lowercase", (t) => {
 
   let query = world.getSystem(S).queries.S;
   let entity = query.results[0];
-  let components = entity.getComponents();
+  let components = entity._components;
 
   t.deepEqual(
     Object.keys(components).map((c) => parseInt(c)),
@@ -940,6 +944,7 @@ test("Register a system that does not extend System", (t) => {
 
   const world = new World();
   const error = t.throws(() => {
+    // @ts-ignore
     world.registerSystem(SystemA);
   });
 

@@ -1,13 +1,36 @@
+import { System } from "./System.js";
 import { now } from "./Utils.js";
 
 export class SystemManager {
+  /**
+   * 
+   * @param {import("./World").World} world 
+   */
   constructor(world) {
+    /**
+     * @type {System[]}
+     */
     this._systems = [];
-    this._executeSystems = []; // Systems that have `execute` method
+    /**
+     * Systems that have `execute` method
+     * @type {System[]}
+     */
+    this._executeSystems = [];
+    /**
+     * @type {import("./World").World}
+     */
     this.world = world;
+    /**
+     * @type {System?}
+     */
     this.lastExecutedSystem = null;
   }
 
+  /**
+   * @template {System} S
+   * @param {import("./System.js").SystemConstructor<S>} SystemClass 
+   * @param {object} [attributes]
+   */
   registerSystem(SystemClass, attributes) {
     if (!SystemClass.isSystem) {
       throw new Error(
@@ -21,28 +44,33 @@ export class SystemManager {
     }
 
     var system = new SystemClass(this.world, attributes);
-    if (system.init) system.init(attributes);
-    system.order = this._systems.length;
+    if (system.init !== System.prototype.init) {
+      system.init(attributes);
+    }
     this._systems.push(system);
-    if (system.execute) {
+    if (system.execute !== System.prototype.execute) {
       this._executeSystems.push(system);
       this.sortSystems();
     }
     return this;
   }
 
+  /**
+   * @template {System} S
+   * @param {import("./System.js").SystemConstructor<S>} SystemClass 
+   */
   unregisterSystem(SystemClass) {
     let system = this.getSystem(SystemClass);
     if (system === undefined) {
       console.warn(
-        `Can unregister system '${SystemClass.getName()}'. It doesn't exist.`
+        `Can't unregister system '${SystemClass.getName()}'. It doesn't exist.`
       );
       return this;
     }
 
     this._systems.splice(this._systems.indexOf(system), 1);
 
-    if (system.execute) {
+    if (system.execute !== System.prototype.execute) {
       this._executeSystems.splice(this._executeSystems.indexOf(system), 1);
     }
 
@@ -51,26 +79,36 @@ export class SystemManager {
   }
 
   sortSystems() {
-    this._executeSystems.sort((a, b) => {
-      return a.priority - b.priority || a.order - b.order;
-    });
+    /**
+     * @param {System} a 
+     * @param {System} b 
+     */
+    let sortFn = (a, b) => {
+      return a.priority - b.priority || this._systems.indexOf(a) - this._systems.indexOf(b);
+    };
+    sortFn.bind(this);
+    this._executeSystems.sort(sortFn);
   }
 
+  /**
+   * @template {System} S
+   * @param {import("./System.js").SystemConstructor<S>} SystemClass 
+   * @returns {S?}
+   */
   getSystem(SystemClass) {
-    return this._systems.find((s) => s instanceof SystemClass);
+    return /** @type {S?} */ (this._systems.find((s) => s instanceof SystemClass));
   }
 
   getSystems() {
     return this._systems;
   }
 
-  removeSystem(SystemClass) {
-    var index = this._systems.indexOf(SystemClass);
-    if (!~index) return;
-
-    this._systems.splice(index, 1);
-  }
-
+  /**
+   * 
+   * @param {System} system 
+   * @param {number} delta 
+   * @param {number} time 
+   */
   executeSystem(system, delta, time) {
     if (system.initialized) {
       if (system.canExecute()) {
@@ -87,6 +125,12 @@ export class SystemManager {
     this._executeSystems.forEach((system) => system.stop());
   }
 
+  /**
+   * 
+   * @param {number} delta 
+   * @param {number} time 
+   * @param {boolean} [forcePlay]
+   */
   execute(delta, time, forcePlay) {
     this._executeSystems.forEach(
       (system) =>
@@ -95,6 +139,19 @@ export class SystemManager {
   }
 
   stats() {
+    /**
+     * @type {{
+     *  numSystems: number,
+     *  systems: {
+     *    [name: string]: {
+     *      executeTime: number,
+     *      queries: {
+     *        [name: string]: ReturnType<import("./Query").Query["stats"]>
+     *      }
+     *    }
+     *  }
+     * }}
+     */
     var stats = {
       numSystems: this._systems.length,
       systems: {},
@@ -106,8 +163,8 @@ export class SystemManager {
         queries: {},
         executeTime: system.executeTime,
       });
-      for (var name in system.ctx) {
-        systemStats.queries[name] = system.ctx[name].stats();
+      for (var name in system.queries) {
+        systemStats.queries[name] = system._queryObjects[name].stats();
       }
     }
 

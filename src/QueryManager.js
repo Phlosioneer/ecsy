@@ -1,18 +1,40 @@
-import Query from "./Query.js";
+import { Query } from "./Query.js";
 import { queryKey } from "./Utils.js";
+
+/**
+ * Imported
+ * @template {import("./Component").Component} C
+ * @typedef {import("./Component").ComponentConstructor<C>} ComponentConstructor<C>
+ */
+
+
 
 /**
  * @private
  * @class QueryManager
  */
 export default class QueryManager {
+  /**
+   * 
+   * @param {import("./World").World} world
+   */
   constructor(world) {
+    /**
+     * @type {import("./World").World}
+     */
     this._world = world;
 
-    // Queries indexed by a unique identifier for the components it has
+    /**
+     * Queries indexed by a unique identifier for the components it has
+     * @type {{ [name: string]: Query }}
+     */
     this._queries = {};
   }
 
+  /**
+   * 
+   * @param {import("./Entity").Entity} entity 
+   */
   onEntityRemoved(entity) {
     for (var queryName in this._queries) {
       var query = this._queries[queryName];
@@ -24,8 +46,8 @@ export default class QueryManager {
 
   /**
    * Callback when a component is added to an entity
-   * @param {Entity} entity Entity that just got the new component
-   * @param {Component} Component Component added to the entity
+   * @param {import("./Entity").Entity} entity Entity that just got the new component
+   * @param {ComponentConstructor<any>} Component Component added to the entity
    */
   onEntityComponentAdded(entity, Component) {
     // @todo Use bitmask for checking components?
@@ -59,8 +81,8 @@ export default class QueryManager {
 
   /**
    * Callback when a component is removed from an entity
-   * @param {Entity} entity Entity to remove the component from
-   * @param {Component} Component Component to remove from the entity
+   * @param {import("./Entity").Entity} entity Entity to remove the component from
+   * @param {ComponentConstructor<any>} Component Component to remove from the entity
    */
   onEntityComponentRemoved(entity, Component) {
     for (var queryName in this._queries) {
@@ -88,13 +110,13 @@ export default class QueryManager {
 
   /**
    * Get a query for the specified components
-   * @param {Component} Components Components that the query should have
+   * @param {import("./Query.js").LogicalComponent[]} Components Components that the query should have
    */
   getQuery(Components) {
-    var key = queryKey(Components);
+    var key = queryKey(Components, this._world);
     var query = this._queries[key];
     if (!query) {
-      this._queries[key] = query = new Query(Components, this._world);
+      this._queries[key] = query = new Query(Components, this._world.entityManager);
     }
     return query;
   }
@@ -103,6 +125,9 @@ export default class QueryManager {
    * Return some stats from this class
    */
   stats() {
+    /**
+     * @type {{ [queryName: string]: ReturnType<Query["stats"]> }}
+     */
     var stats = {};
     for (var queryName in this._queries) {
       stats[queryName] = this._queries[queryName].stats();

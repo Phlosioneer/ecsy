@@ -4,7 +4,7 @@ import { loggerSetup, setConsole } from "../helpers/loggerSetup.js";
 
 loggerSetup();
 
-test("registerSystems", (t) => {
+test("register and remove systems", (t) => {
   setConsole(t);
   let world = new World();
 
@@ -19,6 +19,10 @@ test("registerSystems", (t) => {
   // Can't register twice the same system
   world.registerSystem(SystemA);
   t.is(world.systemManager._systems.length, 2);
+
+  world.unregisterSystem(SystemA);
+  t.is(world.systemManager._systems.length, 1);
+  t.truthy(world.systemManager.getSystem(SystemB));
 });
 
 test("passes attributes to system.init", (t) => {
@@ -63,3 +67,4 @@ test("registerSystems with different systems matching names", (t) => {
   world.registerSystem(SystemA);
   t.is(world.systemManager._systems.length, 2);
 });
+

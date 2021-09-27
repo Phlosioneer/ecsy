@@ -1,5 +1,6 @@
 import test from "ava";
 import { World, System } from "../../src/index.js";
+import { queryKey } from "../../src/Utils.js";
 import { FooComponent, BarComponent } from "../helpers/components";
 import { loggerSetup, setConsole } from "../helpers/loggerSetup.js";
 
@@ -30,20 +31,25 @@ test("Stats", async (t) => {
     }
   }
 
+  // Keys are not fixed in an async settings
+  const keyF = queryKey([FooComponent], world);
+  const keyFB = queryKey([FooComponent, BarComponent], world);
+  const keyB = queryKey([BarComponent], world);
+
   t.deepEqual(world.stats(), {
     entities: {
       numEntities: 10,
       numQueries: 3,
       queries: {
-        0: {
+        [keyF]: {
           numComponents: 1,
           numEntities: 10,
         },
-        1: {
+        [keyB]: {
           numComponents: 1,
           numEntities: 4,
         },
-        "0-1": {
+        [keyFB]: {
           numComponents: 2,
           numEntities: 4,
         },
@@ -51,10 +57,12 @@ test("Stats", async (t) => {
       numComponentPool: 2,
       componentPool: {
         FooComponent: {
+          free: 2,
           used: 10,
           size: 12,
         },
         BarComponent: {
+          free: 1,
           used: 4,
           size: 5,
         },
@@ -68,7 +76,20 @@ test("Stats", async (t) => {
       numSystems: 1,
       systems: {
         SystemA: {
-          queries: {},
+          queries: {
+            compBar: {
+              numComponents: 1,
+              numEntities: 4
+            },
+            compBtoh: {
+              numComponents: 2,
+              numEntities: 4
+            },
+            compFoo: {
+              numComponents: 1,
+              numEntities: 10
+            }
+          },
           executeTime: 0,
         },
       },

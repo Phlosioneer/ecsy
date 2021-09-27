@@ -1,0 +1,8 @@
+{
+    "compilerOptions": {
+        "module": "es6",
+        "checkJs": true,
+        "target": "ES6",
+        "moduleResolution": "node"
+    }
+}

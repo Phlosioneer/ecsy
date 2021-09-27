@@ -1,32 +1,17 @@
-/**
- * Return the name of a component
- * @param {Component} Component
- * @private
- */
-export function getName(Component) {
-  return Component.name;
-}
-
-/**
- * Return a valid property name for the Component
- * @param {Component} Component
- * @private
- */
-export function componentPropertyName(Component) {
-  return getName(Component);
-}
 
 /**
  * Get a key from a list of components
- * @param {Array(Component)} Components Array of components to generate the key
+ * @param {import("./Component").LogicalComponent[]} Components Array of components to generate the key
+ * @param {import("./World").World} world
+ * @returns {import("./Types").QueryKey}
  * @private
  */
-export function queryKey(Components) {
+export function queryKey(Components, world) {
   var ids = [];
   for (var n = 0; n < Components.length; n++) {
     var T = Components[n];
 
-    if (!componentRegistered(T)) {
+    if (!componentRegistered(T, world)) {
       throw new Error(`Tried to create a query with an unregistered component`);
     }
 
@@ -50,9 +35,18 @@ export const now =
     ? performance.now.bind(performance)
     : Date.now.bind(Date);
 
-export function componentRegistered(T) {
-  return (
-    (typeof T === "object" && T.Component._typeId !== undefined) ||
-    (T.isComponent && T._typeId !== undefined)
-  );
+/**
+ * 
+ * @param {import("./Component").LogicalComponent} T 
+ * @param {import("./World").World} world 
+ * @returns 
+ */
+export function componentRegistered(T, world) {
+  var id;
+  if (typeof T === "object") {
+    id = T.Component._typeId;
+  } else {
+    id = T._typeId;
+  }
+  return id && id in world.componentsManager._ComponentsMap;
 }

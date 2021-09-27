@@ -47,6 +47,7 @@ loggerSetup();
 
 test("default values", (t) => {
   setConsole(t);
+  /** @type {any} */
   const component = new TestComponent();
 
   t.is(component.string, "");
@@ -70,6 +71,7 @@ test("default values", (t) => {
 
 test("copy component", (t) => {
   setConsole(t);
+  /** @type {any} */
   const srcComponent = new TestComponent();
   srcComponent.string = "abc";
   srcComponent.number = 1;
@@ -84,6 +86,7 @@ test("copy component", (t) => {
   srcComponent.jsonWithDefault = { value: "test 5" };
   srcComponent.vector3WithDefault.set(7, 8, 9);
 
+  /** @type {any} */
   const destComponent = new TestComponent();
   destComponent.copy(srcComponent);
 
@@ -103,6 +106,7 @@ test("copy component", (t) => {
 
 test("clone component", (t) => {
   setConsole(t);
+  /** @type {any} */
   const srcComponent = new TestComponent();
   srcComponent.string = "abc";
   srcComponent.number = 1;

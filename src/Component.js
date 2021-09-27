@@ -1,9 +1,45 @@
 import environment from "./environment";
 
+/**
+ * @typedef {{
+ *  default?: any,
+ *  type: import("./Types").PropType<any>
+ * }} ComponentSchemaProp
+ */
+
+/**
+ * @typedef {{
+ *  [propName: import("./Types").QueryKey]: ComponentSchemaProp
+ * }} ComponentSchema
+ */
+
+/**
+ * @template {Component} C
+ * @typedef {(new(...args: any[]) => C) & typeof Component} ComponentConstructor
+ */
+
+/**
+ * @typedef {ComponentConstructor<any> | import("./System").NotComponent<any>} LogicalComponent
+ */
+
+/**
+ * Hack to cast `this.constructor.<staticProp>` to the correct type.
+ * @template T
+ * @param {object} obj 
+ * @returns {T}
+ */
+function getConstructor(obj) {
+  return obj.constructor;
+}
+
 export class Component {
+  /**
+   * @param {object} props 
+   */
   constructor(props) {
     if (props !== false) {
-      const schema = this.constructor.schema;
+      /** @type {ComponentSchema} */
+      const schema = getConstructor(this).schema;
 
       for (const key in schema) {
         if (props && props.hasOwnProperty(key)) {
@@ -20,15 +56,21 @@ export class Component {
       }
 
       if (environment.isDev && props !== undefined) {
-        this.checkUndefinedAttributes(props);
+        this._checkUndefinedAttributes(props);
       }
     }
 
     this._pool = null;
   }
 
+  /**
+   * 
+   * @param {this} source 
+   * @returns {this}
+   */
   copy(source) {
-    const schema = this.constructor.schema;
+    /** @type {ComponentSchema} */
+    const schema = getConstructor(this).schema;
 
     for (const key in schema) {
       const prop = schema[key];
@@ -40,18 +82,20 @@ export class Component {
 
     // @DEBUG
     if (environment.isDev) {
-      this.checkUndefinedAttributes(source);
+      this._checkUndefinedAttributes(source);
     }
 
     return this;
   }
 
   clone() {
-    return new this.constructor().copy(this);
+    const ctor = getConstructor(this);
+    return new ctor().copy(this);
   }
 
   reset() {
-    const schema = this.constructor.schema;
+    /** @type {ComponentSchema} */
+    const schema = getConstructor(this).schema;
 
     for (const key in schema) {
       const schemaProp = schema[key];
@@ -72,11 +116,16 @@ export class Component {
   }
 
   getName() {
-    return this.constructor.getName();
+    return getConstructor(this).getName();
   }
 
-  checkUndefinedAttributes(src) {
-    const schema = this.constructor.schema;
+  /**
+   * 
+   * @param {this} src 
+   */
+  _checkUndefinedAttributes(src) {
+    /** @type {ComponentSchema} */
+    const schema = getConstructor(this).schema;
 
     // Check that the attributes defined in source are also defined in the schema
     Object.keys(src).forEach((srcKey) => {
@@ -89,8 +138,26 @@ export class Component {
   }
 }
 
+/**
+ * @type {ComponentSchema}
+ */
 Component.schema = {};
+
+/**
+ * @type {true}
+ */
 Component.isComponent = true;
+
+/**
+ * @type {string?}
+ */
+Component.displayName = null;
+
 Component.getName = function () {
   return this.displayName || this.name;
 };
+
+/**
+ * @type {number?}
+ */
+Component._typeId = undefined;
