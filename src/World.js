@@ -88,20 +88,20 @@ export class World {
 
   /**
    * Check whether a component class has been registered to this world.
+   * @param {import("./Component").ComponentConstructor<any>} Component 
+   */
+   hasRegisteredComponent(Component) {
+    return this.componentsManager.hasComponent(Component);
+  }
+
+  /**
+   * Register a system, adding it to the list of systems to execute.
    * @param {import("./System.js").SystemConstructor<any>} System 
    * @param {any} attributes 
    */
   registerSystem(System, attributes) {
     this.systemManager.registerSystem(System, attributes);
     return this;
-  }
-
-  /**
-   * Register a system, adding it to the list of systems to execute.
-   * @param {import("./Component").ComponentConstructor<any>} Component 
-   */
-  hasRegisteredComponent(Component) {
-    return this.componentsManager.hasComponent(Component);
   }
 
   /**
@@ -131,6 +131,63 @@ export class World {
     return this.systemManager.getSystems();
   }
 
+  /**
+   * Register a new tag or a tag created in another world.
+   * @param {string | import("./Tag").Tag} tagOrName
+   */
+  registerTag(tagOrName) {
+    this.componentsManager.registerTag(tagOrName);
+    return this;
+  }
+
+  /**
+   * Get the tag object for a given tag name, if it exists.
+   * @param {string | import("./Tag").Tag} nameOrTag 
+   * @param {boolean} [createIfNotFound] If a tag is not found, create a new one and return that.
+   * @returns {import("./Tag").Tag?}
+   */
+  getTag(nameOrTag, createIfNotFound) {
+    if (typeof nameOrTag === "string") {
+      let tag = this.componentsManager.getTag(nameOrTag);
+      if (!tag && createIfNotFound) {
+        return this.componentsManager.createTag(nameOrTag);
+      } else {
+        return tag;
+      }
+    } else {
+      return nameOrTag;
+    }
+  }
+
+  /**
+   * 
+   * @param {string | import("./Tag").Tag} nameOrTag 
+   * @returns {import("./Tag").Tag}
+   */
+  _getTagOrError(nameOrTag) {
+    if (typeof nameOrTag === "string") {
+      let tag = this.componentsManager.getTag(nameOrTag);
+      if (tag) {
+        return tag;
+      } else {
+        throw new Error(`Cannot use tag "${nameOrTag}" before registering it.`);
+      }
+    } else {
+      return nameOrTag;
+    }
+  }
+
+  /**
+   * 
+   * @param {import("./Tag").Tag | string} tagOrName
+   */
+  hasRegisteredTag(tagOrName) {
+    if (typeof tagOrName === "string") {
+      return !!this.componentsManager.getTag(tagOrName);
+    } else {
+      return this.componentsManager.hasRegisteredTag(tagOrName);
+    }
+  }
 
   /**
    * Executes all systems in this world.
@@ -190,9 +247,9 @@ export class World {
 
   /**
    * 
-   * @param {import("./Component").LogicalComponent[]} components 
+   * @param {import("./Component").QueryTerm[]} components 
    */
   filter(components) {
-    return new Filter(components).findAll(this.entityManager);
+    return new Filter(components, this).findAll();
   }
 }

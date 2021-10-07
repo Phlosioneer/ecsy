@@ -1,4 +1,5 @@
 import test from "ava";
+import { ComponentManager } from "../../src/ComponentManager.js";
 import { World, Component } from "../../src/index.js";
 import {
     FooComponent,
@@ -11,6 +12,11 @@ loggerSetup();
 
 test.serial("Multiple worlds with same components", t => {
     setConsole(t);
+
+    // Ensure we're seeing a fresh global state.
+    FooComponent._typeId = undefined;
+    BarComponent._typeId, undefined;
+    ComponentManager._nextComponentId = 1;
 
     let w1 = new World();
     // Register foo first, then bar
@@ -63,4 +69,82 @@ test.serial("Multiple worlds with same components", t => {
     t.is(entity2FB.getComponent(FooComponent).variableFoo, 6);
     t.is(entity2FB.getComponent(BarComponent).variableBar, 7);
     t.is(entity2B.getComponent(BarComponent).variableBar, 8);
+});
+
+test.serial("Check registration of components and tags", t => {
+    setConsole(t);
+
+    // Ensure we're seeing a fresh global state.
+    FooComponent._typeId = undefined;
+    BarComponent._typeId, undefined;
+    ComponentManager._nextComponentId = 1;
+
+    // Simple case: one world
+    let world1 = new World();
+    
+    t.false(world1.hasRegisteredComponent(FooComponent));
+    t.false(world1.hasRegisteredComponent(BarComponent));
+    t.false(world1.hasRegisteredTag("foo"));
+    t.false(world1.hasRegisteredTag("bar"));
+
+    world1.registerComponent(FooComponent);
+    t.true(world1.hasRegisteredComponent(FooComponent));
+    t.false(world1.hasRegisteredComponent(BarComponent));
+    t.false(world1.hasRegisteredTag("foo"));
+    t.false(world1.hasRegisteredTag("bar"));
+
+    world1.registerTag("foo");
+    t.true(world1.hasRegisteredComponent(FooComponent));
+    t.false(world1.hasRegisteredComponent(BarComponent));
+    t.true(world1.hasRegisteredTag("foo"));
+    t.false(world1.hasRegisteredTag("bar"));
+
+
+    // Complex case: two worlds
+    let world2 = new World();
+
+    // The new world has nothing registered
+    t.false(world2.hasRegisteredComponent(FooComponent));
+    t.false(world2.hasRegisteredComponent(BarComponent));
+    t.false(world2.hasRegisteredTag("foo"));
+    t.false(world2.hasRegisteredTag("bar"));
+
+    // Just creating a world doesn't change anything
+    t.true(world1.hasRegisteredComponent(FooComponent));
+    t.false(world1.hasRegisteredComponent(BarComponent));
+    t.true(world1.hasRegisteredTag("foo"));
+    t.false(world1.hasRegisteredTag("bar"));
+
+    // Register a separate unrelated component
+    world2.registerComponent(BarComponent);
+    t.false(world2.hasRegisteredComponent(FooComponent));
+    t.true(world2.hasRegisteredComponent(BarComponent));
+    t.false(world2.hasRegisteredTag("foo"));
+    t.false(world2.hasRegisteredTag("bar"));
+    t.true(world1.hasRegisteredComponent(FooComponent));
+    t.false(world1.hasRegisteredComponent(BarComponent));
+    t.true(world1.hasRegisteredTag("foo"));
+    t.false(world1.hasRegisteredTag("bar"));
+
+    // Register the same component in multiple worlds
+    world2.registerComponent(FooComponent);
+    t.true(world2.hasRegisteredComponent(FooComponent));
+    t.true(world2.hasRegisteredComponent(BarComponent));
+    t.false(world2.hasRegisteredTag("foo"));
+    t.false(world2.hasRegisteredTag("bar"));
+    t.true(world1.hasRegisteredComponent(FooComponent));
+    t.false(world1.hasRegisteredComponent(BarComponent));
+    t.true(world1.hasRegisteredTag("foo"));
+    t.false(world1.hasRegisteredTag("bar"));
+
+    // Register the same tag in multiple worlds
+    world2.registerTag("foo");
+    t.true(world2.hasRegisteredComponent(FooComponent));
+    t.true(world2.hasRegisteredComponent(BarComponent));
+    t.true(world2.hasRegisteredTag("foo"));
+    t.false(world2.hasRegisteredTag("bar"));
+    t.true(world1.hasRegisteredComponent(FooComponent));
+    t.false(world1.hasRegisteredComponent(BarComponent));
+    t.true(world1.hasRegisteredTag("foo"));
+    t.false(world1.hasRegisteredTag("bar"));
 });

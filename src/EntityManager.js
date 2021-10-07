@@ -4,6 +4,7 @@ import EventDispatcher from "./EventDispatcher.js";
 import { SystemStateComponent } from "./SystemStateComponent.js";
 import environment from "./environment.js";
 import { Entity } from "./Entity";
+import { Tag } from "./Tag.js";
 
 /**
  * Imported
@@ -92,7 +93,7 @@ export class EntityManager {
     this._queryManager = new QueryManager(this.world);
 
     /**
-     * @type {EventDispatcher<ComponentConstructor<any>>}
+     * @type {EventDispatcher<any>}
      */
     this.eventDispatcher = new EventDispatcher();
 
@@ -116,41 +117,17 @@ export class EntityManager {
      */
     this.entitiesToRemove = [];
     /**
+     * Deferred deletion of tags
+     * @type {Entity[]}
+     */
+    this.entitiesWithTagsToRemove = [];
+    /**
      * @type {boolean}
      */
     this.deferredRemovalEnabled = true;
   }
 
-  /**
-   * 
-   * @param {string} name
-   * @returns {Entity?}
-   */
-  getEntityByName(name) {
-    return this._entitiesByNames[name];
-  }
-
-  /**
-   * Create a new entity
-   * @param {string} [name]
-   */
-  createEntity(name) {
-    var entity = this._entityPool.acquire();
-    entity.alive = true;
-    entity.name = name || "";
-    if (name) {
-      if (this._entitiesByNames[name]) {
-        console.warn(`Entity name '${name}' already exists; preserving the old entity`);
-      } else {
-        this._entitiesByNames[name] = entity;
-      }
-    }
-
-    this._entities.push(entity);
-    this.eventDispatcher.dispatchEvent(ENTITY_CREATED, entity);
-    return entity;
-  }
-
+  ///////////////////////////////////////////////////////////////////////////
   // COMPONENTS
 
   /**
@@ -275,6 +252,110 @@ export class EntityManager {
     }
   }
 
+  ///////////////////////////////////////////////////////////////////////////
+  // TAGS
+
+  /**
+   * 
+   * @param {Entity} entity 
+   * @param {Tag | string} tagOrName 
+   */
+  entityAddTag(entity, tagOrName) {
+    let tag = this.world._getTagOrError(tagOrName);
+
+    if (entity._tags.includes(tag)) {
+      return;
+    }
+
+    entity._tags.push(tag);
+
+    // If the tag was previously removed, delete it from the removed list.
+    let removedListIndex = entity._tagsToRemove.indexOf(tag);
+    if (removedListIndex !== -1) {
+      entity._tagsToRemove.splice(removedListIndex, 1);
+    }
+
+    this._queryManager.onEntityTagAdded(entity, tag);
+    this.eventDispatcher.dispatchEvent(TAG_ADDED, entity, tag);
+  }
+
+  /**
+   * 
+   * @param {Entity} entity 
+   * @param {Tag | string} tagOrName 
+   * @param {boolean} [immediately]
+   */
+  entityRemoveTag(entity, tagOrName, immediately) {
+    let tag = this.world._getTagOrError(tagOrName);
+    let index = entity._tags.indexOf(tag);
+    if (index === -1) { return; }
+
+    this.eventDispatcher.dispatchEvent(TAG_REMOVE, entity, tag);
+
+    if (immediately) {
+      entity._tags.splice(index, 1);
+    } else {
+      // If this is the first time we're removing something since we last checked,
+      // add it to the queue of entities for deferred processing.
+      if (entity._tagsToRemove.length === 0) {
+        this.entitiesWithTagsToRemove.push(entity);
+      }
+
+      entity._tags.splice(index, 1);
+
+      // There is an invariant that a tag can't be on both _tags and _tagsToRemove,
+      // so we can safely assume that pushing to _tagsToRemove won't duplicate
+      entity._tagsToRemove.push(tag);
+    }
+
+    this._queryManager.onEntityTagRemoved(entity, tag);
+  }
+
+  /**
+   * 
+   * @param {Entity} entity 
+   * @param {boolean} [immediately]
+   */
+  entityRemoveAllTags(entity, immediately) {
+    let tags = entity._tags;
+    for (let i = tags.length - 1; i >= 0; i--) {
+      this.entityRemoveTag(entity, tags[i], immediately);
+    }
+  }
+
+  ///////////////////////////////////////////////////////////////////////////
+  // ENTITIES
+
+  /**
+   * 
+   * @param {string} name
+   * @returns {Entity?}
+   */
+  getEntityByName(name) {
+    return this._entitiesByNames[name];
+  }
+
+  /**
+   * Create a new entity
+   * @param {string} [name]
+   */
+  createEntity(name) {
+    var entity = this._entityPool.acquire();
+    entity.alive = true;
+    entity.name = name || "";
+    if (name) {
+      if (this._entitiesByNames[name]) {
+        console.warn(`Entity name '${name}' already exists; preserving the old entity`);
+      } else {
+        this._entitiesByNames[name] = entity;
+      }
+    }
+
+    this._entities.push(entity);
+    this.eventDispatcher.dispatchEvent(ENTITY_CREATED, entity);
+    return entity;
+  }
+
   /**
    * Remove the entity from this manager. It will clear also its components
    * @param {Entity} entity Entity to remove from the manager
@@ -326,6 +407,9 @@ export class EntityManager {
     }
   }
 
+  ///////////////////////////////////////////////////////////////////////////
+  // MISC
+
   processDeferredRemoval() {
     if (!this.deferredRemovalEnabled) {
       return;
@@ -351,16 +435,24 @@ export class EntityManager {
         //this._entityRemoveComponentSync(entity, Component, index);
       }
     }
-
     this.entitiesWithComponentsToRemove.length = 0;
+
+    for (let i = 0; i < this.entitiesWithTagsToRemove.length; i++) {
+      let entity = this.entitiesWithTagsToRemove[i];
+      while (entity._tagsToRemove.length > 0) {
+        let tag = entity._tagsToRemove.pop();
+      }
+    }
+    this.entitiesWithTagsToRemove.length = 0;
   }
 
   /**
    * Get a query based on a list of components
-   * @param {import("./Query.js").LogicalComponent[]} Components List of components that will form the query
+   * @param {import("./Query").QueryTerm[] | import("./Query").Filter} termsOrFilter List of components that will form the query
+   * @param {boolean} [createIfNotFound]
    */
-  getQueryByComponents(Components) {
-    return this._queryManager.getQuery(Components);
+  getQueryByComponents(termsOrFilter, createIfNotFound) {
+    return this._queryManager.getQuery(termsOrFilter, createIfNotFound);
   }
 
   // EXTRAS
@@ -412,3 +504,5 @@ const ENTITY_CREATED = "EntityManager#ENTITY_CREATE";
 const ENTITY_REMOVED = "EntityManager#ENTITY_REMOVED";
 const COMPONENT_ADDED = "EntityManager#COMPONENT_ADDED";
 const COMPONENT_REMOVE = "EntityManager#COMPONENT_REMOVE";
+const TAG_ADDED = "EntityManager#TAG_ADDED";
+const TAG_REMOVE = "EntityManager#TAG_REMOVE";

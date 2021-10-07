@@ -9,6 +9,11 @@ import wrapImmutableComponent from "./WrapImmutableComponent.js";
  * @typedef {import("./Component.js").ComponentConstructor<C>} ComponentConstructor<C>
  */
 
+/**
+ * Imported
+ * @typedef {import("./Tag").Tag} Tag
+ */
+
 
 
 /**
@@ -57,13 +62,19 @@ export class Entity {
     this._components = {};
 
     /**
+     * List of tags the entity has
+     * @type {Tag[]}
+     */
+    this._tags = [];
+
+    /**
      * The queries that this entity is part of
      * @type {import("./Query").Query[]}
      */
     this.queries = [];
 
     /**
-     * Entries from _ComponentTypes that are waiting for deferred removal
+     * Entries from `_ComponentTypes` that are waiting for deferred removal
      * @type {ComponentConstructor<any>[]}
      */
     this._ComponentTypesToRemove = [];
@@ -73,6 +84,12 @@ export class Entity {
      * @type {ComponentLookup}
      */
     this._componentsToRemove = {};
+
+    /**
+     * Entries from `_tags` that are waiting for deferred removal
+     * @type {Tag[]}
+     */
+    this._tagsToRemove = [];
 
     /**
      * if there are state components on a entity, it can't be removed completely
@@ -92,7 +109,12 @@ export class Entity {
     this.name = "";
   }
 
+  ///////////////////////////////////////////////////////////////////////////
   // COMPONENTS
+  //
+  // Entity offloads most of the work for adding and removing components
+  // to the entityManager.
+
   /**
    * Get an immutable reference to a component on this entity.
    * @template {Component} C
@@ -228,8 +250,96 @@ export class Entity {
    * @param {boolean} [forceImmediate] Whether all components should be removed immediately
    */
   removeAllComponents(forceImmediate) {
-    return this._entityManager.entityRemoveAllComponents(this, forceImmediate);
+    this._entityManager.entityRemoveAllComponents(this, forceImmediate);
   }
+
+  ///////////////////////////////////////////////////////////////////////////
+  // TAGS
+  //
+  // Entity offloads most of the work of adding and removing tags to the
+  // entityManager.
+
+  getTags() {
+    return this._tags;
+  }
+
+  /**
+   * Adds `tag` to this entity, if it wasn't already on this entity.
+   * @param {Tag | string} tag 
+   */
+  addTag(tag) {
+    this._entityManager.entityAddTag(this, tag);
+    return this;
+  }
+
+  /**
+   * Removes `tag` from this entity, if it was on this entity. 
+   * @param {Tag | string} tag 
+   * @param {boolean} [forceImmediate]
+   */
+  removeTag(tag, forceImmediate) {
+    this._entityManager.entityRemoveTag(this, tag, forceImmediate);
+    return this;
+  }
+
+  /**
+   * 
+   * @param {Tag | string} tag 
+   * @param {boolean} [includeRemoved]
+   */
+  hasTag(tag, includeRemoved) {
+    includeRemoved = !!includeRemoved;
+    let tagObj = this._entityManager.world._getTagOrError(tag);
+    return this._tags.includes(tagObj) ||
+      (includeRemoved && this._tagsToRemove.includes(tagObj));
+  }
+
+  /**
+   * 
+   * @param {Tag | string} tag 
+   */
+  hasRemovedTag(tag) {
+    let tagObj = this._entityManager.world._getTagOrError(tag);
+    return this._tagsToRemove.includes(tagObj);
+  }
+
+  /**
+   * 
+   * @param {Tag[]} tags 
+   */
+  hasAllTags(tags) {
+    for (let i = 0; i < tags.length; i++) {
+      if (!this._tags.includes(tags[i])) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
+   * 
+   * @param {Tag[]} tags 
+   */
+
+  hasAnyTags(tags) {
+    for (let i = 0; i < tags.length; i++) {
+      if (this._tags.includes(tags[i])) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * 
+   * @param {boolean} [forceImmediate]
+   */
+  removeAllTags(forceImmediate) {
+    this._entityManager.entityRemoveAllTags(this, forceImmediate);
+  }
+
+  ///////////////////////////////////////////////////////////////////////////
+  // MISC
 
   /**
    * Copies all components from `source` to this entity. To achieve a true copy

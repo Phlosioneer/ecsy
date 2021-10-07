@@ -1,4 +1,5 @@
 import environment from "./environment";
+import { Tag } from "./Tag";
 
 /**
  * @typedef {{
@@ -19,7 +20,18 @@ import environment from "./environment";
  */
 
 /**
- * @typedef {ComponentConstructor<any> | import("./System").NotComponent<any>} LogicalComponent
+ * @typedef {ComponentConstructor<any> |
+ *  import("./System").NotTerm |
+ *  (import("./Tag").Tag | string)} QueryTerm
+ */
+
+/**
+ * @typedef {{
+ *  components: ComponentConstructor<any>[],
+ *  tags: Tag[],
+ *  notComponents: ComponentConstructor<any>[],
+ *  notTags: Tag[]
+ * }} ParsedQueryTerms
  */
 
 /**

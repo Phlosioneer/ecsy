@@ -1,7 +1,6 @@
 import { Component } from "./Component.js";
 import { Entity } from "./Entity.js";
-import { Query, QueryEvents } from "./Query.js";
-import { componentRegistered } from "./Utils.js";
+import { Filter, Query, QueryEvents } from "./Query.js";
 
 /**
  * Imported
@@ -12,17 +11,15 @@ import { componentRegistered } from "./Utils.js";
 
 
 /**
- * @template {Component} C
  * @typedef {{
  *  operator: "not",
- *  Component: ComponentConstructor<C>,
- *  getName: () => string
- * }} NotComponent<C>
+ *  innerTerm: import("./Component").QueryTerm
+ * }} NotTerm
  */
 
 /**
  * @typedef {{
- *  components: import("./Component.js").LogicalComponent[],
+ *  components: import("./Component.js").QueryTerm[],
  *  listen?: {
  *    added?: boolean,
  *    removed?: boolean,
@@ -133,28 +130,17 @@ export class System {
    * @param {QueryDef} queryConfig 
    */
   _createQuery(queryName, queryConfig) {
-    var Components = queryConfig.components;
-    if (!Components || Components.length === 0) {
+    var terms = queryConfig.components;
+    if (!terms || terms.length === 0) {
       throw new Error("'components' attribute can't be empty in a query");
     }
 
-    // Detect if the components have already been registered
-    let unregisteredComponents = Components.filter(
-      (Component) => !componentRegistered(Component, this.world)
-    );
-
-    if (unregisteredComponents.length > 0) {
-      throw new Error(
-        `Tried to create a query '${
-          this.constructor.name
-        }.${queryName}' with unregistered components: [${unregisteredComponents
-          .map((c) => c.getName())
-          .join(", ")}]`
-      );
-    }
+    // Check for errors in the query
+    let filter = new Filter(terms, this.world);
+    filter.validate(this.getName() + "." + queryName);
 
     // Find or create the query object.
-    var query = this.world.entityManager.getQueryByComponents(Components);
+    var query = this.world.entityManager.getQueryByComponents(filter, true);
     
     this._queryObjects[queryName] = query;
     this.queries[queryName] = {
@@ -248,7 +234,7 @@ export class System {
 
   /**
    * 
-   * @param {QueryEvents} eventName 
+   * @param {string} eventName 
    * @param {Query} query 
    * @param {string} queryName 
    */
@@ -353,7 +339,7 @@ export class System {
         let queryDefinition = queries[queryName];
         /** @type {object} */
         let jsonQuery = (json.queries[queryName] = {
-          key: this._queryObjects[queryName].key,
+          key: this._queryObjects[queryName].filter.key,
         });
 
         jsonQuery.mandatory = queryDefinition.mandatory === true;
@@ -408,13 +394,12 @@ System.getName = function () {
  * Use the Not pseudo-class to negate a component query.
  * 
  * @template {Component} C
- * @param {ComponentConstructor<C>} Component 
- * @returns {NotComponent<C>}
+ * @param {import("./Component.js").QueryTerm} term
+ * @returns {NotTerm}
  */
-export function Not(Component) {
+export function Not(term) {
   return {
     operator: "not",
-    Component: Component,
-    getName: () => Component.getName()
+    innerTerm: term
   };
 }

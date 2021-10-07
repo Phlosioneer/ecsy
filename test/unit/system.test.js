@@ -175,18 +175,6 @@ test("Queries with 'Not' operator", (t) => {
     entity.addComponent(EmptyComponent);
   }
 
-  class SystemNotNot extends System {}
-
-  SystemNotNot.queries = {
-    notFoo: { components: [Not(FooComponent), Not(BarComponent)] },
-  };
-
-  const error = t.throws(() => {
-    world.registerSystem(SystemNotNot);
-  });
-
-  t.is(error.message, "Can't create a query without components");
-
   class SystemNotBar extends System {}
 
   SystemNotBar.queries = {

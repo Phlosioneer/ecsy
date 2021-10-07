@@ -1,5 +1,4 @@
-import { Query } from "./Query.js";
-import { queryKey } from "./Utils.js";
+import { Filter, Query } from "./Query.js";
 
 /**
  * Imported
@@ -109,14 +108,80 @@ export default class QueryManager {
   }
 
   /**
-   * Get a query for the specified components
-   * @param {import("./Query.js").LogicalComponent[]} Components Components that the query should have
+   * 
+   * @param {import("./Entity").Entity} entity 
+   * @param {import("./Tag").Tag} tag 
    */
-  getQuery(Components) {
-    var key = queryKey(Components, this._world);
-    var query = this._queries[key];
+  onEntityTagAdded(entity, tag) {
+    for (var queryName in this._queries) {
+      var query = this._queries[queryName];
+
+      if (
+        query.filter.notTags.includes(tag) &&
+        query.entities.includes(entity)
+      ) {
+        query.removeEntity(entity);
+        continue;
+      }
+
+      if (
+        query.filter.tags.includes(tag) &&
+        query.match(entity) &&
+        !query.entities.includes(entity)
+      ) {
+        query.addEntity(entity);
+      }
+    }
+  }
+
+  /**
+   * 
+   * @param {import("./Entity").Entity} entity 
+   * @param {import("./Tag").Tag} tag 
+   */
+  onEntityTagRemoved(entity, tag) {
+    for (let queryName in this._queries) {
+      var query = this._queries[queryName];
+
+      if (
+        query.filter.notTags.includes(tag) &&
+        query.match(entity) &&
+        !query.entities.includes(entity)
+      ) {
+        query.addEntity(entity);
+        continue;
+      }
+
+      if (
+        query.filter.tags.includes(tag) &&
+        query.match(entity) &&
+        query.entities.includes(entity)
+      ) {
+        query.removeEntity(entity);
+      }
+    }
+  }
+
+  /**
+   * Get a query for the specified components
+   * @param {import("./Component").QueryTerm[] | Filter} termsOrFilter Components that the query should have
+   * @param {boolean} [createIfNotFound]
+   */
+  getQuery(termsOrFilter, createIfNotFound) {
+    let filter;
+    if (termsOrFilter instanceof Array) {
+      filter = new Filter(termsOrFilter, this._world);
+    } else {
+      filter = termsOrFilter;
+    }
+
+    let query = this._queries[filter.key];
     if (!query) {
-      this._queries[key] = query = new Query(Components, this._world.entityManager);
+      if (createIfNotFound) {
+        this._queries[filter.key] = query = new Query(filter, this._world.entityManager);
+      } else {
+        query = null;
+      }
     }
     return query;
   }

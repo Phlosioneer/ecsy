@@ -1,6 +1,6 @@
 import test from "ava";
 import { World, System } from "../../src/index.js";
-import { queryKey } from "../../src/Utils.js";
+import { Filter } from "../../src/Query.js";
 import { FooComponent, BarComponent } from "../helpers/components";
 import { loggerSetup, setConsole } from "../helpers/loggerSetup.js";
 
@@ -32,9 +32,9 @@ test("Stats", async (t) => {
   }
 
   // Keys are not fixed in an async settings
-  const keyF = queryKey([FooComponent], world);
-  const keyFB = queryKey([FooComponent, BarComponent], world);
-  const keyB = queryKey([BarComponent], world);
+  const keyF = new Filter([FooComponent], world).key;
+  const keyFB = new Filter([FooComponent, BarComponent], world).key;
+  const keyB = new Filter([BarComponent], world).key;
 
   t.deepEqual(world.stats(), {
     entities: {

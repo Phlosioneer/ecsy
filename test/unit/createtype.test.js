@@ -27,6 +27,7 @@ test("Create simple type", (t) => {
 
   // copy and clone
   const error3 = t.throws(() => {
+    //@ts-ignore
     createType({ copy: {}, clone: {} });
   });
   t.is(

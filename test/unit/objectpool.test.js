@@ -1,7 +1,6 @@
 import test from "ava";
 import {
   Component,
-  TagComponent,
   World,
   Types,
   ObjectPool,
@@ -19,11 +18,9 @@ test("Detecting Pool", (t) => {
   PoolComponent.schema = {
     num: { type: Types.Number },
   };
-  class PoolTagComponent extends TagComponent {}
   class CustomPoolComponent extends Component {}
 
   world.registerComponent(PoolComponent);
-  world.registerComponent(PoolTagComponent);
   world.registerComponent(NoPoolComponent, false);
 
   var customPool = new ObjectPool(CustomPoolComponent, 10);
@@ -34,10 +31,6 @@ test("Detecting Pool", (t) => {
   );
   t.true(
     world.componentsManager.getComponentsPool(PoolComponent) instanceof
-      ObjectPool
-  );
-  t.true(
-    world.componentsManager.getComponentsPool(PoolTagComponent) instanceof
       ObjectPool
   );
   t.is(

@@ -173,7 +173,7 @@ test("registering components before systems", (t) => {
   });
   t.is(
     error1.message,
-    "Tried to create a query 'SystemA.S' with unregistered components: [ComponentA, ComponentB]"
+    "Tried to create a query \"SystemA.S\" with unregistered components: [ComponentA, ComponentB]"
   );
 
   world.registerComponent(ComponentA);
@@ -183,6 +183,6 @@ test("registering components before systems", (t) => {
   });
   t.is(
     error2.message,
-    "Tried to create a query 'SystemA.S' with unregistered components: [ComponentB]"
+    "Tried to create a query \"SystemA.S\" with unregistered components: [ComponentB]"
   );
 });

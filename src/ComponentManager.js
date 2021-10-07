@@ -1,5 +1,6 @@
 import { Component } from "./Component.js";
 import { ObjectPool } from "./ObjectPool.js";
+import { Tag } from "./Tag.js";
 
 /**
  * @template {Component} C
@@ -33,6 +34,12 @@ export class ComponentManager {
      * @type {number}
      */
     this.nextComponentId = 0;
+
+    /**
+     * All registered tags by name
+     * @type {{ [name: string]: Tag }}
+     */
+    this._tags = {}
   }
 
   /**
@@ -115,6 +122,73 @@ export class ComponentManager {
    */
   getComponentsPool(Component) {
     return this._componentPool[Component._typeId];
+  }
+
+  /**
+   * Create a new tag and register it.
+   * @param {string} name 
+   */
+  createTag(name) {
+    if (this._tags[name]) {
+      throw new Error("Cannot create a new tag with the same name as a registered tag: " + name);
+    }
+
+    const tag = new Tag(name, ComponentManager._nextComponentId);
+    ComponentManager._nextComponentId += 1;
+    this._tags[name] = tag;
+    return tag;
+  }
+
+  /**
+   * Register a tag that was created by another world, or that was unregistered.
+   * 
+   * @param {Tag | string} tag 
+   */
+  registerTag(tag) {
+    if (typeof tag === "string") {
+      // New tag
+      if (this._tags[tag]) {
+        throw new Error("Cannot register a tag with the same name as a registered tag: " + tag);
+      } else {
+        this._tags[tag] = new Tag(tag, ComponentManager._nextComponentId);
+        ComponentManager._nextComponentId += 1;
+      }
+    } else {
+      // Reuse tag from another world
+      if (this._tags[tag.name]) {
+        throw new Error("Cannot register a tag with the same name as a registered tag: " + tag.name);
+      } else {
+        this._tags[tag.name] = tag;
+      }
+    }
+  }
+
+  /**
+   * Get the tag object for a given tag name, if it exists.
+   * 
+   * @param {string} name
+   * @returns {Tag?}
+   */
+  getTag(name) {
+    return this._tags[name];
+  }
+
+  /**
+   * 
+   * @param {import ("./Tag").Tag} tag 
+   * @returns 
+   */
+  hasRegisteredTag(tag) {
+    return this._tags[tag.name] === tag;
+  }
+
+  /**
+   * Unregister the tag if it was registered. Does nothing if the tag doesn't
+   * exist.
+   * @param {string} name 
+   */
+  unregisterTag(name) {
+    delete this._tags[name]
   }
 }
 
