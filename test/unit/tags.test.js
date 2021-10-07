@@ -1,6 +1,6 @@
 import test from "ava";
 import { World, Not, Component } from "../../src/index.js";
-import { Filter } from "../../src/Query.js";
+import { Filter } from "../../src/Filter.js";
 import {
   FooComponent,
   BarComponent,

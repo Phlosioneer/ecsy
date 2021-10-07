@@ -4,7 +4,7 @@ import { ComponentManager } from "./ComponentManager.js";
 import { Version } from "./Version.js";
 import { hasWindow, now } from "./Utils.js";
 import { Entity } from "./Entity.js";
-import { Filter } from "./Query.js";
+import { Filter } from "./Filter.js";
 
 /**
  * @typedef {{

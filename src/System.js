@@ -1,6 +1,7 @@
 import { Component } from "./Component.js";
 import { Entity } from "./Entity.js";
-import { Filter, Query, QueryEvents } from "./Query.js";
+import { Query, QueryEvents } from "./Query.js";
+import { Filter } from "./Filter.js";
 
 /**
  * Imported

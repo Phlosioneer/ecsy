@@ -448,7 +448,7 @@ export class EntityManager {
 
   /**
    * Get a query based on a list of components
-   * @param {import("./Query").QueryTerm[] | import("./Query").Filter} termsOrFilter List of components that will form the query
+   * @param {import("./Query").QueryTerm[] | import("./Filter").Filter} termsOrFilter List of components that will form the query
    * @param {boolean} [createIfNotFound]
    */
   getQueryByComponents(termsOrFilter, createIfNotFound) {

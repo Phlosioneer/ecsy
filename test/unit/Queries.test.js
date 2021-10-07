@@ -1,6 +1,5 @@
 import test from "ava";
 import { World, System, Not, Component } from "../../src/index.js";
-import { Filter } from "../../src/Query.js";
 import { FooComponent, BarComponent } from "../helpers/components";
 import { loggerSetup, setConsole } from "../helpers/loggerSetup.js";
 

@@ -1,4 +1,5 @@
-import { Filter, Query } from "./Query.js";
+import { Query } from "./Query.js";
+import { Filter } from "./Filter.js";
 
 /**
  * Imported
