@@ -3,14 +3,9 @@ import { EntityManager } from "./EntityManager.js";
 import EventDispatcher from "./EventDispatcher.js";
 import { Filter } from "./Filter.js";
 
-/**
- * Imported
- * @typedef {import("./Component.js").QueryTerm} QueryTerm
- */
-
 export class Query {
   /**
-   * @param {QueryTerm[] | Filter} termsOrFilter List of terms to query
+   * @param {import("./Typedefs").QueryTerm[] | Filter} termsOrFilter List of terms to query
    * @param {EntityManager} manager
    */
   constructor(termsOrFilter, manager) {

@@ -2,14 +2,6 @@ import { Query } from "./Query.js";
 import { Filter } from "./Filter.js";
 
 /**
- * Imported
- * @template {import("./Component").Component} C
- * @typedef {import("./Component").ComponentConstructor<C>} ComponentConstructor<C>
- */
-
-
-
-/**
  * @private
  * @class QueryManager
  */
@@ -47,7 +39,7 @@ export default class QueryManager {
   /**
    * Callback when a component is added to an entity
    * @param {import("./Entity").Entity} entity Entity that just got the new component
-   * @param {ComponentConstructor<any>} Component Component added to the entity
+   * @param {import("./Typedefs").ComponentConstructor<any>} Component Component added to the entity
    */
   onEntityComponentAdded(entity, Component) {
     // @todo Use bitmask for checking components?
@@ -82,7 +74,7 @@ export default class QueryManager {
   /**
    * Callback when a component is removed from an entity
    * @param {import("./Entity").Entity} entity Entity to remove the component from
-   * @param {ComponentConstructor<any>} Component Component to remove from the entity
+   * @param {import("./Typedefs").ComponentConstructor<any>} Component Component to remove from the entity
    */
   onEntityComponentRemoved(entity, Component) {
     for (var queryName in this._queries) {
@@ -165,7 +157,7 @@ export default class QueryManager {
 
   /**
    * Get a query for the specified components
-   * @param {import("./Component").QueryTerm[] | Filter} termsOrFilter Components that the query should have
+   * @param {import("./Typedefs").QueryTerm[] | Filter} termsOrFilter Components that the query should have
    * @param {boolean} [createIfNotFound]
    */
   getQuery(termsOrFilter, createIfNotFound) {

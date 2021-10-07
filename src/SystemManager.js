@@ -28,7 +28,7 @@ export class SystemManager {
 
   /**
    * @template {System} S
-   * @param {import("./System.js").SystemConstructor<S>} SystemClass 
+   * @param {import("./System").SystemConstructor<S>} SystemClass 
    * @param {object} [attributes]
    */
   registerSystem(SystemClass, attributes) {
@@ -57,7 +57,7 @@ export class SystemManager {
 
   /**
    * @template {System} S
-   * @param {import("./System.js").SystemConstructor<S>} SystemClass 
+   * @param {import("./System").SystemConstructor<S>} SystemClass 
    */
   unregisterSystem(SystemClass) {
     let system = this.getSystem(SystemClass);
@@ -92,7 +92,7 @@ export class SystemManager {
 
   /**
    * @template {System} S
-   * @param {import("./System.js").SystemConstructor<S>} SystemClass 
+   * @param {import("./System").SystemConstructor<S>} SystemClass 
    * @returns {S?}
    */
   getSystem(SystemClass) {

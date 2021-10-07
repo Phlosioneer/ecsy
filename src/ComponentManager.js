@@ -2,21 +2,16 @@ import { Component } from "./Component.js";
 import { ObjectPool } from "./ObjectPool.js";
 import { Tag } from "./Tag.js";
 
-/**
- * @template {Component} C
- * @typedef {import("./Component.js").ComponentConstructor<C>} ComponentConstructor<C>
- */
-
 export class ComponentManager {
   
   constructor() {
     /**
-     * @type {ComponentConstructor<any>[]}
+     * @type {import("./Typedefs").ComponentConstructor<any>[]}
      */
     this.Components = [];
 
     /**
-     * @type {{[typeId: number]: ComponentConstructor<any>}}
+     * @type {{[typeId: number]: import("./Typedefs").ComponentConstructor<any>}}
      */
     this._ComponentsMap = {};
 
@@ -44,7 +39,7 @@ export class ComponentManager {
 
   /**
    * 
-   * @param {ComponentConstructor<any>} Component 
+   * @param {import("./Typedefs").ComponentConstructor<any>} Component 
    */
   hasComponent(Component) {
     return this.Components.indexOf(Component) !== -1;
@@ -52,7 +47,7 @@ export class ComponentManager {
 
   /**
    * @template {Component} C
-   * @param {ComponentConstructor<C>} Component 
+   * @param {import("./Typedefs").ComponentConstructor<C>} Component 
    * @param {ObjectPool<C> | false} [objectPool]
    */
   registerComponent(Component, objectPool) {
@@ -101,7 +96,7 @@ export class ComponentManager {
 
   /**
    * 
-   * @param {ComponentConstructor<any>} Component 
+   * @param {import("./Typedefs").ComponentConstructor<any>} Component 
    */
   componentAddedToEntity(Component) {
     this.numComponents[Component._typeId]++;
@@ -109,7 +104,7 @@ export class ComponentManager {
 
   /**
    * 
-   * @param {ComponentConstructor<any>} Component 
+   * @param {import("./Typedefs").ComponentConstructor<any>} Component 
    */
   componentRemovedFromEntity(Component) {
     this.numComponents[Component._typeId]--;
@@ -117,7 +112,7 @@ export class ComponentManager {
 
   /**
    * @template {Component} C
-   * @param {ComponentConstructor<C>} Component 
+   * @param {import("./Typedefs").ComponentConstructor<C>} Component 
    * @returns {ObjectPool<C>?}
    */
   getComponentsPool(Component) {

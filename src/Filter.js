@@ -3,7 +3,7 @@ import { Tag } from "./Tag";
 export class Filter {
     /**
    * Parse an array of mixed terms into split arrays.
-   * @param {import("./Query").QueryTerm[]} terms 
+   * @param {import("./Typedefs").QueryTerm[]} terms 
    * @param {import("./World").World} world 
    */
     constructor(terms, world) {
@@ -12,11 +12,11 @@ export class Filter {
   
       /** @type {Tag[]} */
       this.tags = [];
-      /** @type {import("./Component").ComponentConstructor<any>[]} */
+      /** @type {import("./Typedefs").ComponentConstructor<any>[]} */
       this.components = [];
       /** @type {Tag[]} */
       this.notTags = [];
-      /** @type {import("./Component").ComponentConstructor<any>[]} */
+      /** @type {import("./Typedefs").ComponentConstructor<any>[]} */
       this.notComponents = [];
   
       /** @type {string[]} */
@@ -110,7 +110,7 @@ export class Filter {
     }
   
     /**
-     * @param {import("./Query").QueryTerm} term
+     * @param {import("./Typedefs").QueryTerm} term
      * @param {boolean} [inverted]
      */
     _parseTerm(term, inverted) {

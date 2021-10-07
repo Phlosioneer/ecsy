@@ -4,35 +4,8 @@ import { Query, QueryEvents } from "./Query.js";
 import { Filter } from "./Filter.js";
 
 /**
- * Imported
- * @template {Component} C
- * @typedef {import("./ComponentManager.js").ComponentConstructor<C>} ComponentConstructor<C>
- */
-
-
-
-/**
  * @typedef {{
- *  operator: "not",
- *  innerTerm: import("./Component").QueryTerm
- * }} NotTerm
- */
-
-/**
- * @typedef {{
- *  components: import("./Component.js").QueryTerm[],
- *  listen?: {
- *    added?: boolean,
- *    removed?: boolean,
- *    changed?: boolean | ComponentConstructor<any>[]
- *  },
- *  mandatory?: boolean,
- * }} QueryDef
- */
-
-/**
- * @typedef {{
- *  [queryName: string]: QueryDef
+ *  [queryName: string]: import("./Typedefs").QueryDef
  * } | {}} SystemQueryDefs
  */
 
@@ -128,7 +101,7 @@ export class System {
   /**
    * 
    * @param {string} queryName 
-   * @param {QueryDef} queryConfig 
+   * @param {import("./Typedefs").QueryDef} queryConfig 
    */
   _createQuery(queryName, queryConfig) {
     var terms = queryConfig.components;
@@ -178,7 +151,7 @@ export class System {
    * 
    * @param {Query} query 
    * @param {string} queryName 
-   * @param {boolean | ComponentConstructor<any>[]} config 
+   * @param {boolean | import("./Typedefs").ComponentConstructor<any>[]} config 
    */
   _registerChangedEventListener(query, queryName, config) {
     query.reactive = true;
@@ -201,7 +174,7 @@ export class System {
         (entity, changedComponent) => {
           // Avoid duplicates
           if (
-            config.includes(/** @type{ComponentConstructor<any>} */ (changedComponent.constructor)) &&
+            config.includes(/** @type{import("./Typedefs").ComponentConstructor<any>} */ (changedComponent.constructor)) &&
             !eventList.includes(entity)
           ) {
             eventList.push(entity);
@@ -395,8 +368,8 @@ System.getName = function () {
  * Use the Not pseudo-class to negate a component query.
  * 
  * @template {Component} C
- * @param {import("./Component.js").QueryTerm} term
- * @returns {NotTerm}
+ * @param {import("./Typedefs").QueryTerm} term
+ * @returns {import("./Typedefs").NotTerm}
  */
 export function Not(term) {
   return {

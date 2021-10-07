@@ -1,19 +1,8 @@
 import { Component } from "./Component";
 import environment from "./environment.js";
 import { Query } from "./Query.js";
+import { Tag } from "./Tag";
 import wrapImmutableComponent from "./WrapImmutableComponent.js";
-
-/**
- * Imported
- * @template {Component} C
- * @typedef {import("./Component.js").ComponentConstructor<C>} ComponentConstructor<C>
- */
-
-/**
- * Imported
- * @typedef {import("./Tag").Tag} Tag
- */
-
 
 
 /**
@@ -45,13 +34,13 @@ export class Entity {
     this.alive = false;
 
     /**
-     * @type {import("./EntityManager.js").EntityManager?}
+     * @type {import("./EntityManager").EntityManager?}
      */
     this._entityManager = entityManager || null;
     
     /**
      * List of components types the entity has
-     * @type {ComponentConstructor<any>[]}
+     * @type {import("./Typedefs").ComponentConstructor<any>[]}
      */
     this._ComponentTypes = [];
 
@@ -75,7 +64,7 @@ export class Entity {
 
     /**
      * Entries from `_ComponentTypes` that are waiting for deferred removal
-     * @type {ComponentConstructor<any>[]}
+     * @type {import("./Typedefs").ComponentConstructor<any>[]}
      */
     this._ComponentTypesToRemove = [];
 
@@ -118,7 +107,7 @@ export class Entity {
   /**
    * Get an immutable reference to a component on this entity.
    * @template {Component} C
-   * @param {ComponentConstructor<C>} Component Type of component to get
+   * @param {import("./Typedefs").ComponentConstructor<C>} Component Type of component to get
    * @param {boolean} [includeRemoved] Whether a component that is staled to be removed should be also considered
    * @returns {C?}
    */
@@ -137,7 +126,7 @@ export class Entity {
   /**
    * Get a component that is slated to be removed from this entity.
    * @template {Component} C
-   * @param {ComponentConstructor<C>} Component Type of component to get
+   * @param {import("./Typedefs").ComponentConstructor<C>} Component Type of component to get
    * @returns {C?}
    */
   getRemovedComponent(Component) {
@@ -158,7 +147,7 @@ export class Entity {
   /**
    * Get a mutable reference to a component on this entity.
    * @template {Component} C
-   * @param {ComponentConstructor<C>} Component Type of component to get
+   * @param {import("./Typedefs").ComponentConstructor<C>} Component Type of component to get
    * @returns {C?}
    */
   getMutableComponent(Component) {
@@ -185,7 +174,7 @@ export class Entity {
 
   /**
    * Add a component to the entity.
-   * @param {ComponentConstructor<any>} Component Type of component to add to this entity
+   * @param {import("./Typedefs").ComponentConstructor<any>} Component Type of component to add to this entity
    * @param {object} [values] Optional values to replace the default attributes on the component
    */
   addComponent(Component, values) {
@@ -195,7 +184,7 @@ export class Entity {
 
   /**
    * Remove a component from the entity.
-   * @param {ComponentConstructor<any>} Component Type of component to remove from this entity
+   * @param {import("./Typedefs").ComponentConstructor<any>} Component Type of component to remove from this entity
    * @param {boolean} [forceImmediate] Whether a component should be removed immediately
    */
   removeComponent(Component, forceImmediate) {
@@ -205,7 +194,7 @@ export class Entity {
 
   /**
    * Check if the entity has a component.
-   * @param {ComponentConstructor<any>} Component Type of component
+   * @param {import("./Typedefs").ComponentConstructor<any>} Component Type of component
    * @param {boolean} [includeRemoved] Whether a component that is staled to be removed should be also considered
    */
   hasComponent(Component, includeRemoved) {
@@ -217,7 +206,7 @@ export class Entity {
 
   /**
    * Check if the entity has a component that is slated to be removed.
-   * @param {ComponentConstructor<any>} Component Type of component
+   * @param {import("./Typedefs").ComponentConstructor<any>} Component Type of component
    */
   hasRemovedComponent(Component) {
     return !!~this._ComponentTypesToRemove.indexOf(Component);
@@ -225,7 +214,7 @@ export class Entity {
 
   /**
    * Check if the entity has all components in a list.
-   * @param {ComponentConstructor<any>[]} Components Component types to check
+   * @param {import("./Typedefs").ComponentConstructor<any>[]} Components Component types to check
    */
   hasAllComponents(Components) {
     for (var i = 0; i < Components.length; i++) {
@@ -236,7 +225,7 @@ export class Entity {
 
   /**
    * Check if the entity has any of the components in a list.
-   * @param {ComponentConstructor<any>[]} Components Component types to check
+   * @param {import("./Typedefs").ComponentConstructor<any>[]} Components Component types to check
    */
   hasAnyComponents(Components) {
     for (var i = 0; i < Components.length; i++) {
