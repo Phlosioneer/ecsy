@@ -114,6 +114,10 @@ export class EntityManager {
      */
     this.entitiesWithTagsToRemove = [];
     /**
+     * Deferred deletion of pairs
+     */
+    this.entitiesWithPairsToRemove = [];
+    /**
      * @type {boolean}
      */
     this.deferredRemovalEnabled = true;
@@ -314,6 +318,82 @@ export class EntityManager {
       this.entityRemoveTag(entity, tags[i], immediately);
     }
   }
+  
+  ///////////////////////////////////////////////////////////////////////////
+  // PAIRS
+
+  /**
+   * 
+   * @param {Entity} entity 
+   * @param {Tag | string} relation 
+   * @param {Entity} relEntity 
+   * @returns {boolean} False if the pair already existed
+   */
+  entityAddPair(entity, relation, relEntity) {
+    // TODO: Events!
+    let relationTag = this.world._getTagOrError(relation);
+    let currentRelEntities = entity._pairs[relationTag.name];
+    if (currentRelEntities) {
+      if (currentRelEntities.includes(relEntity)) {
+        // Already in the list
+        return false;
+      }
+      currentRelEntities.push(relEntity);
+    } else {
+      entity._pairs[relationTag.name] = [relEntity];
+    }
+
+    this.eventDispatcher.dispatchEvent(PAIR_ADDED, entity, {
+      relation: relationTag,
+      entity: relEntity
+    });
+    return true;
+  }
+
+  /**
+   * 
+   * @param {Entity} entity 
+   * @param {Tag | string} relation 
+   * @param {Entity} relEntity 
+   * @param {boolean} [immediately]
+   * @returns {boolean} False if the pair doesn't exist
+   */
+  entityRemovePair(entity, relation, relEntity, immediately) {
+    let relationTag = this.world._getTagOrError(relation);
+    
+    // We have to dispatch an event before removal, BUT we have
+    // to make sure that there will be a removal before sending
+    // a notification.
+    let relEntities = entity._pairs[relationTag.name];
+    if (relEntities && relEntities.includes(relEntity)) {
+      // Definitely removing the pair.
+      this.eventDispatcher.dispatchEvent(PAIR_REMOVE, entity, {
+        relation: relationTag,
+        entity: relEntity
+      });
+
+      if (relEntities.length === 1) {
+        delete entity._pairs[relationTag.name];
+      } else {
+        relEntities.splice(relEntities.indexOf(relEntity), 1);
+      }
+
+      if (!immediately) {
+        if (Object.keys(entity._pairsToRemove).length === 0) {
+          this.entitiesWithPairsToRemove.push(entity);
+        }
+        if (entity._pairsToRemove[relationTag.name]) {
+          entity._pairsToRemove[relationTag.name].push(relEntity);
+        } else {
+          entity._pairsToRemove[relationTag.name] = [relEntity];
+        }
+      }
+
+      return true;
+    } else {
+      return false;
+    }
+  }
 
   ///////////////////////////////////////////////////////////////////////////
   // ENTITIES
@@ -431,11 +511,16 @@ export class EntityManager {
 
     for (let i = 0; i < this.entitiesWithTagsToRemove.length; i++) {
       let entity = this.entitiesWithTagsToRemove[i];
-      while (entity._tagsToRemove.length > 0) {
-        let tag = entity._tagsToRemove.pop();
-      }
+      // TODO: For now there's no cleanup for tags
+      entity._tagsToRemove.length = 0;
     }
     this.entitiesWithTagsToRemove.length = 0;
+
+    for (let i = 0; i < this.entitiesWithPairsToRemove.length; i++) {
+      let entity = this.entitiesWithPairsToRemove[i];
+      // TODO: For now there's no cleanup for pairs
+      entity._pairsToRemove = {};
+    }
   }
 
   /**
@@ -498,3 +583,5 @@ const COMPONENT_ADDED = "EntityManager#COMPONENT_ADDED";
 const COMPONENT_REMOVE = "EntityManager#COMPONENT_REMOVE";
 const TAG_ADDED = "EntityManager#TAG_ADDED";
 const TAG_REMOVE = "EntityManager#TAG_REMOVE";
+const PAIR_ADDED = "EntityManager#PAIR_ADDED";
+const PAIR_REMOVE = "EntityManager#PAIR_REMOVE";

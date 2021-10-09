@@ -20,7 +20,9 @@ export class Entity {
    * @param {import("./EntityManager").EntityManager} entityManager 
    */
   constructor(entityManager) {
-    
+    ///////////////////////////////////////////////
+    // Public fields
+
     /**
      * Unique ID for this entity
      * @type {number}
@@ -32,6 +34,15 @@ export class Entity {
      * @type {boolean}
      */
     this.alive = false;
+
+    /**
+     * The entity's unique name.
+     * @type {string}
+     */
+     this.name = "";
+
+    ///////////////////////////////////////////////
+    // Private fields
 
     /**
      * @type {import("./EntityManager").EntityManager?}
@@ -55,6 +66,12 @@ export class Entity {
      * @type {Tag[]}
      */
     this._tags = [];
+
+    /**
+     * Pairs that the entity has
+     * @type {{ [tagName: string]: Entity[] }}
+     */
+    this._pairs = {};
 
     /**
      * The queries that this entity is part of
@@ -81,6 +98,12 @@ export class Entity {
     this._tagsToRemove = [];
 
     /**
+     * Entries from `_pairs` that are waiting for deferred removal
+     * @type {{ [tagName: string]: Entity[] }}
+     */
+    this._pairsToRemove = {};
+
+    /**
      * if there are state components on a entity, it can't be removed completely
      * @type {number}
      */
@@ -90,12 +113,6 @@ export class Entity {
      * @type {import("./EntityManager").EntityPool}
      */
     this._pool = undefined;
-
-    /**
-     * The entity's unique name.
-     * @type {string}
-     */
-    this.name = "";
   }
 
   ///////////////////////////////////////////////////////////////////////////
@@ -325,6 +342,151 @@ export class Entity {
    */
   removeAllTags(forceImmediate) {
     this._entityManager.entityRemoveAllTags(this, forceImmediate);
+  }
+
+  ///////////////////////////////////////////////////////////////////////////
+  // Pairs
+  //
+  // A pair is a relation and a related object. A relation is a tag, and the
+  // related object is any entity.
+
+  /**
+   * Returns false if the pair is already on this entity.
+   * @param {Tag | string} relation 
+   * @param {Entity} entity 
+   */
+  addPair(relation, entity) {
+    return this._entityManager.entityAddPair(this, relation, entity);
+  }
+
+  /**
+   * Replace an old entity in a pair with a new one. If newEntity is not
+   * associated with relation, then then this method does nothing and returns
+   * false.
+   * 
+   * @param {Tag | string} relation 
+   * @param {Entity} newEntity
+   * @param {Entity} oldEntity
+   */
+  replacePair(relation, newEntity, oldEntity) {
+    if (this.removePair(relation, oldEntity)) {
+      this.addPair(relation, newEntity);
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  /**
+   * Remove all entities associated with a relation and replace with
+   * entityOrEntities.
+   * 
+   * @param {Tag | string} relation 
+   * @param {Entity | Entity[]} entityOrEntities 
+   */
+  overwritePair(relation, entityOrEntities) {
+    this.removeRelation(relation);
+    if (entityOrEntities instanceof Array) {
+      entityOrEntities.forEach(entity => this.addPair(relation, entity), this);
+    } else {
+      this.addPair(relation, entityOrEntities);
+    }
+  }
+
+  /**
+   * 
+   * @param {Tag | string} relation 
+   * @param {boolean} [includeRemoved]
+   * @returns {Entity | Entity[] | null}
+   */
+  getRelation(relation, includeRemoved) {
+    let relationTag = this._entityManager.world._getTagOrError(relation);
+    let ret = this._pairs[relationTag.name] || [];
+    if (includeRemoved) {
+      let entities = this._pairsToRemove[relationTag.name];
+      if (entities) {
+        ret = ret.concat(entities);
+      }
+    }
+
+    if (ret.length === 0) {
+      return null;
+    } else if (ret.length === 1) {
+      return ret[0];
+    } else {
+      return ret;
+    }
+  }
+
+  /**
+   * 
+   * @param {Tag | string} relation 
+   * @returns {Entity | Entity[] | null}
+   */
+  getRemovedRelation(relation) {
+    let relationTag = this._entityManager.world._getTagOrError(relation);
+    let entities = this._pairsToRemove[relationTag.name];
+    if (entities === undefined) {
+      return null;
+    } else if (entities.length == 1) {
+      return entities[0];
+    } else {
+      return entities;
+    }
+  }
+
+  /**
+   * 
+   * @param {boolean} [includeRemoved]
+   */
+  getAllRelations(includeRemoved) {
+    let ret = Object.keys(this._pairs);
+    if (includeRemoved) {
+      ret = ret.concat(Object.keys(this._pairsToRemove)
+        .filter(key => !this._pairs[key]));
+    }
+    return ret;
+  }
+
+  /**
+   * 
+   */
+  getAllRemovedRelations() {
+    return Object.keys(this._pairsToRemove);
+  }
+
+  /**
+   * 
+   * @param {Tag | string} relation 
+   * @param {Entity} entity 
+   * @param {boolean} [forceImmediate]
+   */
+  removePair(relation, entity, forceImmediate) {
+    return this._entityManager.entityRemovePair(this, relation, entity, forceImmediate);
+  }
+
+  /**
+   * Remove all the related entities with this relation.
+   * @param {Tag | string} relation 
+   * @param {boolean} [forceImmediate]
+   */
+  removeRelation(relation, forceImmediate) {
+    let relationTag = this._entityManager.world._getTagOrError(relation);
+    let objects = this._pairs[relationTag.name];
+    if (objects !== undefined) {
+      for (let i = objects.length - 1; i >= 0; i--) {
+        let obj = objects[i];
+        this._entityManager.entityRemovePair(this, relationTag, obj, forceImmediate);
+      }
+    }
+  }
+
+  /**
+   * Remove all relations and related objects
+   * @param {boolean} [forceImmediate]
+   */
+  removeAllPairs(forceImmediate) {
+    this.getAllRelations().forEach(relation => this.removeRelation(relation, forceImmediate), this);
   }
 
   ///////////////////////////////////////////////////////////////////////////
