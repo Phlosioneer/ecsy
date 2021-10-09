@@ -458,6 +458,35 @@ export class Entity {
   /**
    * 
    * @param {Tag | string} relation 
+   * @param {Entity} relEntity 
+   * @param {boolean} [includeRemoved]
+   */
+  hasPair(relation, relEntity, includeRemoved) {
+    let relationTag = this._entityManager.world._getTagOrError(relation);
+    if (this._pairs[relationTag.name]
+          && this._pairs[relationTag.name].includes(relEntity)) {
+      return true;
+    } else if (includeRemoved) {
+      return this.hasRemovedPair(relation, relEntity);
+    } else {
+      return false;
+    }
+  }
+
+  /**
+   * 
+   * @param {Tag | string} relation 
+   * @param {Entity} relEntity 
+   */
+  hasRemovedPair(relation, relEntity) {
+    let relationTag = this._entityManager.world._getTagOrError(relation);
+    return !!(this._pairsToRemove[relationTag.name]
+      && this._pairsToRemove[relationTag.name].includes(relEntity));
+  }
+
+  /**
+   * 
+   * @param {Tag | string} relation 
    * @param {Entity} entity 
    * @param {boolean} [forceImmediate]
    */
