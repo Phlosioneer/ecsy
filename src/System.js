@@ -364,16 +364,3 @@ System.getName = function () {
   return this.displayName || this.name;
 };
 
-/**
- * Use the Not pseudo-class to negate a component query.
- * 
- * @template {Component} C
- * @param {import("./Typedefs").QueryTerm} term
- * @returns {import("./Typedefs").NotTerm}
- */
-export function Not(term) {
-  return {
-    operator: "not",
-    innerTerm: term
-  };
-}

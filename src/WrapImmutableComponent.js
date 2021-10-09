@@ -19,7 +19,7 @@ const proxyHandler = {
  * Returns a Proxy<C> that does not allow the modification of any fields.
  * 
  * @template {import("./Component").Component} C
- * @param {import("./Component").ComponentConstructor<C>} T
+ * @param {import("./Typedefs").ComponentConstructor<C>} T
  * @param {C} component
  * @returns {C}
  */

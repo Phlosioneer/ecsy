@@ -1,8 +1,9 @@
 export { World } from "./World.js";
-export { System, Not } from "./System.js";
+export { System } from "./System.js";
 export { Component } from "./Component.js";
 export { SystemStateComponent } from "./SystemStateComponent.js";
 export { ObjectPool } from "./ObjectPool.js";
+export { Not } from "./Filter.js";
 export {
   Types,
   createType,
