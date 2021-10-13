@@ -1,5 +1,6 @@
 import { Query } from "./Query.js";
 import { Filter } from "./Filter.js";
+import { COMPONENT_ADDED, COMPONENT_REMOVE, ENTITY_REMOVED, PAIR_ADDED, PAIR_REMOVE, TAG_ADDED, TAG_REMOVE } from "./EntityManager";
 
 /**
  * @private
@@ -9,8 +10,9 @@ export default class QueryManager {
   /**
    * 
    * @param {import("./World").World} world
+   * @param {import("./EntityManager").EntityManager} manager
    */
-  constructor(world) {
+  constructor(world, manager) {
     /**
      * @type {import("./World").World}
      */
@@ -21,13 +23,20 @@ export default class QueryManager {
      * @type {{ [name: string]: Query }}
      */
     this._queries = {};
+
+    manager.endEventDispatcher.addEventListener(ENTITY_REMOVED, this.onEntityRemoved.bind(this));
+    let events = [COMPONENT_ADDED, COMPONENT_REMOVE, TAG_ADDED,
+      TAG_REMOVE, PAIR_ADDED, PAIR_REMOVE]
+    events.forEach(eventName => {
+      manager.endEventDispatcher.addEventListener(eventName, this._onEntityEvent.bind(this));
+    }, this);
   }
 
   /**
-   * 
+   * @param {string} eventType
    * @param {import("./Entity").Entity} entity 
    */
-  onEntityRemoved(entity) {
+  onEntityRemoved(dispatcher, eventType, entity) {
     for (var queryName in this._queries) {
       var query = this._queries[queryName];
       if (entity.queries.indexOf(query) !== -1) {
@@ -37,37 +46,25 @@ export default class QueryManager {
   }
 
   /**
-   * Callback when a component is added to an entity
+   * @param {string} eventType
    * @param {import("./Entity").Entity} entity Entity that just got the new component
-   * @param {import("./Typedefs").ComponentConstructor<any>} Component Component added to the entity
+   * @param {any} data
    */
-  onEntityComponentAdded(entity, Component) {
-    // @todo Use bitmask for checking components?
+  _onEntityEvent(dispatcher, eventType, entity, data) {
 
     // Check each indexed query to see if we need to add this entity to the list
     for (var queryName in this._queries) {
       var query = this._queries[queryName];
 
-      if (
-        !!~query.filter.notComponents.indexOf(Component) &&
-        ~query.entities.indexOf(entity)
-      ) {
-        query.removeEntity(entity);
-        continue;
+      if (query.entities.includes(entity)) {
+        if (!query.filter.isMatch(entity)) {
+          query.removeEntity(entity);
+        }
+      } else {
+        if (query.filter.isMatch(entity)) {
+          query.addEntity(entity);
+        }
       }
-
-      // Add the entity only if:
-      // Component is in the query
-      // and Entity has ALL the components of the query
-      // and Entity is not already in the query
-      if (
-        !~query.filter.components.indexOf(Component) ||
-        !query.match(entity) ||
-        ~query.entities.indexOf(entity)
-      )
-        continue;
-
-      query.addEntity(entity);
     }
   }
 
@@ -96,61 +93,6 @@ export default class QueryManager {
       ) {
         query.removeEntity(entity);
         continue;
-      }
-    }
-  }
-
-  /**
-   * 
-   * @param {import("./Entity").Entity} entity 
-   * @param {import("./Tag").Tag} tag 
-   */
-  onEntityTagAdded(entity, tag) {
-    for (var queryName in this._queries) {
-      var query = this._queries[queryName];
-
-      if (
-        query.filter.notTags.includes(tag) &&
-        query.entities.includes(entity)
-      ) {
-        query.removeEntity(entity);
-        continue;
-      }
-
-      if (
-        query.filter.tags.includes(tag) &&
-        query.match(entity) &&
-        !query.entities.includes(entity)
-      ) {
-        query.addEntity(entity);
-      }
-    }
-  }
-
-  /**
-   * 
-   * @param {import("./Entity").Entity} entity 
-   * @param {import("./Tag").Tag} tag 
-   */
-  onEntityTagRemoved(entity, tag) {
-    for (let queryName in this._queries) {
-      var query = this._queries[queryName];
-
-      if (
-        query.filter.notTags.includes(tag) &&
-        query.match(entity) &&
-        !query.entities.includes(entity)
-      ) {
-        query.addEntity(entity);
-        continue;
-      }
-
-      if (
-        query.filter.tags.includes(tag) &&
-        query.match(entity) &&
-        query.entities.includes(entity)
-      ) {
-        query.removeEntity(entity);
       }
     }
   }

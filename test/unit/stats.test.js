@@ -67,10 +67,14 @@ test("Stats", async (t) => {
           size: 5,
         },
       },
-      eventDispatcher: {
+      endEventDispatcher: {
         fired: 24,
-        handled: 0,
+        handled: 14,
       },
+      beginEventDispatcher: {
+        fired: 14,
+        handled: 0
+      }
     },
     system: {
       numSystems: 1,

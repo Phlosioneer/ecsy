@@ -315,7 +315,11 @@ export class Entity {
    */
   hasAllTags(tags) {
     for (let i = 0; i < tags.length; i++) {
-      if (!this._tags.includes(tags[i])) {
+      let tag = tags[i];
+      if (tag.isRelation) {
+        throw new Error("Cannot check for relations in hasAllTags");
+      }
+      if (!this._tags.includes(tag)) {
         return false;
       }
     }
@@ -329,7 +333,11 @@ export class Entity {
 
   hasAnyTags(tags) {
     for (let i = 0; i < tags.length; i++) {
-      if (this._tags.includes(tags[i])) {
+      let tag = tags[i];
+      if (tag.isRelation) {
+        throw new Error("Cannot check for relations in hasAnyTags");
+      }
+      if (this._tags.includes(tag)) {
         return true;
       }
     }
@@ -458,10 +466,37 @@ export class Entity {
   /**
    * 
    * @param {Tag | string} relation 
+   * @param {Entity} entity 
+   * @param {boolean} [forceImmediate]
+   */
+  removePair(relation, entity, forceImmediate) {
+    return this._entityManager.entityRemovePair(this, relation, entity, forceImmediate);
+  }
+
+  /**
+   * Remove all the related entities with this relation.
+   * @param {Tag | string} relation 
+   * @param {boolean} [forceImmediate]
+   */
+  removeRelation(relation, forceImmediate) {
+    return this._entityManager.entityRemoveRelation(this, relation, forceImmediate);
+  }
+
+  /**
+   * Remove all relations and related objects
+   * @param {boolean} [forceImmediate]
+   */
+  removeAllPairs(forceImmediate) {
+    this.getAllRelations().forEach(relation => this.removeRelation(relation, forceImmediate), this);
+  }
+
+  /**
+   * 
+   * @param {Tag | string} relation 
    * @param {Entity} relEntity 
    * @param {boolean} [includeRemoved]
    */
-  hasPair(relation, relEntity, includeRemoved) {
+   hasPair(relation, relEntity, includeRemoved) {
     let relationTag = this._entityManager.world._getTagOrError(relation);
     if (this._pairs[relationTag.name]
           && this._pairs[relationTag.name].includes(relEntity)) {
@@ -483,39 +518,39 @@ export class Entity {
     return !!(this._pairsToRemove[relationTag.name]
       && this._pairsToRemove[relationTag.name].includes(relEntity));
   }
+  
+  /**
+   * 
+   * @param {Tag[]} relations 
+   */
+  hasAllRelations(relations) {
+    for (let i = 0; i < relations.length; i++) {
+      let relation = relations[i];
+      if (!relation.isRelation) {
+        throw new Error("Cannot check for tags in hasAllRelations");
+      }
+      if (!this._pairs[relation.name]) {
+        return false;
+      }
+    }
+    return true;
+  }
 
   /**
    * 
-   * @param {Tag | string} relation 
-   * @param {Entity} entity 
-   * @param {boolean} [forceImmediate]
+   * @param {Tag[]} relations 
    */
-  removePair(relation, entity, forceImmediate) {
-    return this._entityManager.entityRemovePair(this, relation, entity, forceImmediate);
-  }
-
-  /**
-   * Remove all the related entities with this relation.
-   * @param {Tag | string} relation 
-   * @param {boolean} [forceImmediate]
-   */
-  removeRelation(relation, forceImmediate) {
-    let relationTag = this._entityManager.world._getTagOrError(relation);
-    let objects = this._pairs[relationTag.name];
-    if (objects !== undefined) {
-      for (let i = objects.length - 1; i >= 0; i--) {
-        let obj = objects[i];
-        this._entityManager.entityRemovePair(this, relationTag, obj, forceImmediate);
+  hasAnyRelations(relations) {
+    for (let i = 0; i < relations.length; i++) {
+      let relation = relations[i];
+      if (!relation.isRelation) {
+        throw new Error("Cannot check for tags in hasAnyRelation");
+      }
+      if (this._pairs[relation.name]) {
+        return true;
       }
     }
-  }
-
-  /**
-   * Remove all relations and related objects
-   * @param {boolean} [forceImmediate]
-   */
-  removeAllPairs(forceImmediate) {
-    this.getAllRelations().forEach(relation => this.removeRelation(relation, forceImmediate), this);
+    return false;
   }
 
   ///////////////////////////////////////////////////////////////////////////

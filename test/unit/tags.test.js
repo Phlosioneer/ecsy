@@ -68,7 +68,7 @@ test("Strings and tags are interchangable", t => {
 test("Register same tag object to different world", t => {
   setConsole(t);
 
-  let world1 = new World().registerTag("foo");
+  let world1 = new World().registerTag("foo").registerRelation("bar");
   let world2 = new World();
   let fooTag = world1.getTag("foo");
   let id = fooTag._id;
@@ -78,6 +78,8 @@ test("Register same tag object to different world", t => {
   t.true(world1.hasRegisteredTag("foo"));
   t.true(world1.hasRegisteredTag(fooTag));
   t.is(fooTag._id, id);
+
+  let barRel = world1.getTag("bar");
 });
 
 test("Can't register two tags with same name", t => {
@@ -86,23 +88,26 @@ test("Can't register two tags with same name", t => {
   // Registering the same tag name twice
   let world1 = new World().registerTag("foo");
   let error1 = t.throws(() => world1.registerTag("foo"));
-  t.is(error1.message, "Cannot register a tag with the same name as a registered tag: foo");
+  t.is(error1.message, "Cannot register a tag with the same name as a registered tag or relation: foo");
 
   // Registering the same tag object
   let fooTag = world1.getTag("foo");
   let error2 = t.throws(() => world1.registerTag(fooTag));
-  t.is(error2.message, "Cannot register a tag with the same name as a registered tag: foo");
+  t.is(error2.message, "Cannot register a tag with the same name as a registered tag or relation: foo");
 
   // Registering a tag object from another world where the name is already in use
   let world2 = new World().registerTag("foo");
   let error3 = t.throws(() => world2.registerTag(fooTag));
-  t.is(error3.message, "Cannot register a tag with the same name as a registered tag: foo");
+  t.is(error3.message, "Cannot register a tag with the same name as a registered tag or relation: foo");
 
   // Registering two different tag objects with the same name
   let bar1 = world1.registerTag("bar").getTag("bar");
   let bar2 = world2.registerTag("bar").getTag("bar");
   let world3 = new World().registerTag(bar1);
   let error4 = t.throws(() => world3.registerTag(bar2));
-  t.is(error4.message, "Cannot register a tag with the same name as a registered tag: bar");
+  t.is(error4.message, "Cannot register a tag with the same name as a registered tag or relation: bar");
+});
 
+test.skip("Can't mix tags and relations", t => {
+  t.fail();
 });

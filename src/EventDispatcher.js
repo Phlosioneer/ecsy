@@ -3,6 +3,7 @@
  * @template T
  * @typedef {(
  *  dispatcher: EventDispatcher,
+ *  eventName: string,
  *  entity: import("./Entity").Entity?,
  *  data: T?
  * ) => void} EventListener<T>
@@ -80,14 +81,19 @@ export default class EventDispatcher {
     this.stats.fired++;
 
     var listenerArray = this._listeners[eventName];
+    let wasHandled = false;
     if (listenerArray !== undefined) {
       // Make a copy of the array, to prevent mutation by listeners (such as
       // listeners removing themselves)
       var array = listenerArray.slice(0);
 
       for (var i = 0; i < array.length; i++) {
-        array[i].call(this, entity, data);
+        array[i](this, eventName, entity, data);
+        wasHandled = true;
       }
+    }
+    if (wasHandled) {
+      this.stats.handled++;
     }
   }
 

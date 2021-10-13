@@ -16,8 +16,8 @@ loggerSetup();
 test("Create and use pairs", t => {
     setConsole(t);
 
-    let world = new World().registerTag("isChild")
-        .registerTag("isParent").registerTag("owesMoney");
+    let world = new World().registerRelation("isChild")
+        .registerRelation("isParent").registerRelation("owesMoney");
     let parent = world.createEntity();
     let child1 = world.createEntity();
     let child2 = world.createEntity();
@@ -118,8 +118,8 @@ test("Create and use pairs", t => {
 test("Entities can be added to themselves through pairs", t => {
     setConsole(t);
 
-    let world = new World().registerTag("isChild")
-        .registerTag("isParent").registerTag("owesMoney");
+    let world = new World().registerRelation("isChild")
+        .registerRelation("isParent").registerRelation("owesMoney");
     let timeTraveller = world.createEntity();
 
     let success = timeTraveller.addPair("isChild", timeTraveller);
@@ -136,7 +136,7 @@ test("Entities can be added to themselves through pairs", t => {
 test("Removing pairs sync", t => {
     setConsole(t);
 
-    let world = new World().registerTag("isChild").registerTag("isParent");
+    let world = new World().registerRelation("isChild").registerRelation("isParent");
     let parent = world.createEntity();
     let child1 = world.createEntity();
     let child2 = world.createEntity();
@@ -197,7 +197,7 @@ test("Removing pairs sync", t => {
 test("Removing entire relations sync", t => {
     setConsole(t);
 
-    let world = new World().registerTag("isChild").registerTag("isParent");
+    let world = new World().registerRelation("isChild").registerRelation("isParent");
     let parent = world.createEntity();
     let child1 = world.createEntity();
     let child2 = world.createEntity();
@@ -243,7 +243,7 @@ test("Removing entire relations sync", t => {
 test("Removing pairs all relations sync", t => {
     setConsole(t);
 
-    let world = new World().registerTag("isChild").registerTag("isParent");
+    let world = new World().registerRelation("isChild").registerRelation("isParent");
     let parent = world.createEntity();
     let child1 = world.createEntity();
     let child2 = world.createEntity();
@@ -289,7 +289,7 @@ test("Removing pairs all relations sync", t => {
 test("Removing pairs deferred", t => {
     setConsole(t);
 
-    let world = new World().registerTag("isChild").registerTag("isParent");
+    let world = new World().registerRelation("isChild").registerRelation("isParent");
     let parent = world.createEntity();
     let child1 = world.createEntity();
     let child2 = world.createEntity();
@@ -372,7 +372,7 @@ test("Removing pairs deferred", t => {
 test("Removing entire relations deferred", t => {
     setConsole(t);
 
-    let world = new World().registerTag("isChild").registerTag("isParent");
+    let world = new World().registerRelation("isChild").registerRelation("isParent");
     let parent = world.createEntity();
     let child1 = world.createEntity();
     let child2 = world.createEntity();
@@ -441,7 +441,7 @@ test("Removing entire relations deferred", t => {
 test("Removing pairs all relations deferred", t => {
     setConsole(t);
 
-    let world = new World().registerTag("isChild").registerTag("isParent");
+    let world = new World().registerRelation("isChild").registerRelation("isParent");
     let parent = world.createEntity();
     let child1 = world.createEntity();
     let child2 = world.createEntity();

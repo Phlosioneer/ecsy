@@ -157,10 +157,11 @@ export class System {
     query.reactive = true;
     if (config === true) {
       // Any change on the entity from the components in the query
+      /** @type {Entity[]} */
       let eventList = (this.queries[queryName].changed = []);
       query.eventDispatcher.addEventListener(
         QueryEvents.changed,
-        (entity) => {
+        (dispatcher, eventName, entity) => {
           // Avoid duplicates
           if (!eventList.includes(entity)) {
             eventList.push(entity);
@@ -168,10 +169,11 @@ export class System {
         }
       );
     } else if (Array.isArray(config)) {
+      /** @type {Entity[]} */
       let eventList = (this.queries[queryName].changed = []);
       query.eventDispatcher.addEventListener(
         QueryEvents.changed,
-        (entity, changedComponent) => {
+        (dispatcher, eventName, entity, changedComponent) => {
           // Avoid duplicates
           if (
             config.includes(/** @type{import("./Typedefs").ComponentConstructor<any>} */ (changedComponent.constructor)) &&
@@ -213,11 +215,12 @@ export class System {
    * @param {string} queryName 
    */
   _registerQueryEventListener(eventName, query, queryName) {
+    /** @type {Entity[]} */
     let eventList = (this.queries[queryName][eventName] = []);
 
     query.eventDispatcher.addEventListener(
       QueryEvents[eventName],
-      (entity) => {
+      (dispatcher, eventName, entity) => {
         // @fixme overhead?
         if (!eventList.includes(entity)) {
           eventList.push(entity);

@@ -889,6 +889,7 @@ test("Components with the the same name in uppercase and lowercase", (t) => {
   world.createEntity().addComponent(B).addComponent(b);
 
   let query = world.getSystem(S).queries.S;
+  t.is(query.results.length, 1);
   let entity = query.results[0];
   let components = entity._components;
 

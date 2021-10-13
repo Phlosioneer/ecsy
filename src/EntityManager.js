@@ -78,17 +78,19 @@ export class EntityManager {
      * @type {{[name: string]: Entity}}
      */
     this._entitiesByNames = {};
-
+    
     /**
-     * @type {QueryManager}
-     */
-    this._queryManager = new QueryManager(this.world);
-
-    /**
+     * Events fire before any changes happen
      * @type {EventDispatcher<any>}
      */
-    this.eventDispatcher = new EventDispatcher();
-
+    this.beginEventDispatcher = new EventDispatcher();
+    
+    /**
+     * Events fire after changes are completed
+     * @type {EventDispatcher<any>}
+     */
+    this.endEventDispatcher = new EventDispatcher();
+    
     /**
      * @type {EntityPool}
      */
@@ -121,6 +123,11 @@ export class EntityManager {
      * @type {boolean}
      */
     this.deferredRemovalEnabled = true;
+
+    /**
+     * @type {QueryManager}
+     */
+      this._queryManager = new QueryManager(this.world, this);
   }
 
   ///////////////////////////////////////////////////////////////////////////
@@ -154,15 +161,15 @@ export class EntityManager {
       return;
     }
 
+    this.beginEventDispatcher.dispatchEvent(COMPONENT_ADDED, entity, Component);
+
     entity._ComponentTypes.push(Component);
 
     if (Object.getPrototypeOf(Component) === SystemStateComponent) {
       entity.numStateComponents++;
     }
 
-    var componentPool = this.world.componentsManager.getComponentsPool(
-      Component
-    );
+    var componentPool = this.world.componentsManager.getComponentsPool(Component);
 
     var component = componentPool
       ? componentPool.acquire()
@@ -174,10 +181,10 @@ export class EntityManager {
 
     entity._components[Component._typeId] = component;
 
-    this._queryManager.onEntityComponentAdded(entity, Component);
     this.world.componentsManager.componentAddedToEntity(Component);
+    this.endEventDispatcher.dispatchEvent(COMPONENT_ADDED, entity, Component);
 
-    this.eventDispatcher.dispatchEvent(COMPONENT_ADDED, entity, Component);
+    
   }
 
   /**
@@ -190,7 +197,7 @@ export class EntityManager {
     var index = entity._ComponentTypes.indexOf(Component);
     if (!~index) return;
 
-    this.eventDispatcher.dispatchEvent(COMPONENT_REMOVE, entity, Component);
+    this.beginEventDispatcher.dispatchEvent(COMPONENT_REMOVE, entity, Component);
 
     if (immediately) {
       this._entityRemoveComponentSync(entity, Component, index);
@@ -199,7 +206,9 @@ export class EntityManager {
         this.entitiesWithComponentsToRemove.push(entity);
 
       entity._ComponentTypes.splice(index, 1);
-      entity._ComponentTypesToRemove.push(Component);
+      if (!entity._ComponentTypesToRemove.includes(Component)) {
+        entity._ComponentTypesToRemove.push(Component);
+      }
 
       entity._componentsToRemove[Component._typeId] =
         entity._components[Component._typeId];
@@ -217,6 +226,8 @@ export class EntityManager {
         entity.remove();
       }
     }
+
+    this.endEventDispatcher.dispatchEvent(COMPONENT_REMOVE, entity, Component);
   }
 
   /**
@@ -258,11 +269,15 @@ export class EntityManager {
    */
   entityAddTag(entity, tagOrName) {
     let tag = this.world._getTagOrError(tagOrName);
+    if (tag.isRelation) {
+      throw new Error("Cannot add a relation as a tag: " + tag.name);
+    }
 
     if (entity._tags.includes(tag)) {
       return;
     }
 
+    this.beginEventDispatcher.dispatchEvent(TAG_ADDED, entity, tag);
     entity._tags.push(tag);
 
     // If the tag was previously removed, delete it from the removed list.
@@ -271,8 +286,7 @@ export class EntityManager {
       entity._tagsToRemove.splice(removedListIndex, 1);
     }
 
-    this._queryManager.onEntityTagAdded(entity, tag);
-    this.eventDispatcher.dispatchEvent(TAG_ADDED, entity, tag);
+    this.endEventDispatcher.dispatchEvent(TAG_ADDED, entity, tag);
   }
 
   /**
@@ -283,10 +297,11 @@ export class EntityManager {
    */
   entityRemoveTag(entity, tagOrName, immediately) {
     let tag = this.world._getTagOrError(tagOrName);
+    if (tag.isRelation) { return; }
     let index = entity._tags.indexOf(tag);
     if (index === -1) { return; }
 
-    this.eventDispatcher.dispatchEvent(TAG_REMOVE, entity, tag);
+    this.beginEventDispatcher.dispatchEvent(TAG_REMOVE, entity, tag);
 
     if (immediately) {
       entity._tags.splice(index, 1);
@@ -304,7 +319,7 @@ export class EntityManager {
       entity._tagsToRemove.push(tag);
     }
 
-    this._queryManager.onEntityTagRemoved(entity, tag);
+    this.endEventDispatcher.dispatchEvent(TAG_REMOVE, entity, tag);
   }
 
   /**
@@ -332,18 +347,28 @@ export class EntityManager {
   entityAddPair(entity, relation, relEntity) {
     // TODO: Events!
     let relationTag = this.world._getTagOrError(relation);
+    if (!relationTag.isRelation) {
+      throw new Error("Cannot use a tag as a relation: " + relationTag.name);
+    }
+
     let currentRelEntities = entity._pairs[relationTag.name];
+    if (currentRelEntities && currentRelEntities.includes(relEntity)) {
+      // Already in the list
+      return false;
+    }
+
+    this.beginEventDispatcher.dispatchEvent(PAIR_ADDED, entity, {
+      relation: relationTag,
+      entity: relEntity
+    });
+
     if (currentRelEntities) {
-      if (currentRelEntities.includes(relEntity)) {
-        // Already in the list
-        return false;
-      }
       currentRelEntities.push(relEntity);
     } else {
       entity._pairs[relationTag.name] = [relEntity];
     }
 
-    this.eventDispatcher.dispatchEvent(PAIR_ADDED, entity, {
+    this.endEventDispatcher.dispatchEvent(PAIR_ADDED, entity, {
       relation: relationTag,
       entity: relEntity
     });
@@ -360,38 +385,72 @@ export class EntityManager {
    */
   entityRemovePair(entity, relation, relEntity, immediately) {
     let relationTag = this.world._getTagOrError(relation);
-    
-    // We have to dispatch an event before removal, BUT we have
-    // to make sure that there will be a removal before sending
-    // a notification.
-    let relEntities = entity._pairs[relationTag.name];
-    if (relEntities && relEntities.includes(relEntity)) {
-      // Definitely removing the pair.
-      this.eventDispatcher.dispatchEvent(PAIR_REMOVE, entity, {
-        relation: relationTag,
-        entity: relEntity
-      });
-
-      if (relEntities.length === 1) {
-        delete entity._pairs[relationTag.name];
-      } else {
-        relEntities.splice(relEntities.indexOf(relEntity), 1);
-      }
-
-      if (!immediately) {
-        if (Object.keys(entity._pairsToRemove).length === 0) {
-          this.entitiesWithPairsToRemove.push(entity);
-        }
-        if (entity._pairsToRemove[relationTag.name]) {
-          entity._pairsToRemove[relationTag.name].push(relEntity);
-        } else {
-          entity._pairsToRemove[relationTag.name] = [relEntity];
-        }
-      }
-
-      return true;
-    } else {
+    if (!relationTag.isRelation) {
       return false;
+    }
+    
+    let relEntities = entity._pairs[relationTag.name];
+    if (!(relEntities && relEntities.includes(relEntity))) {
+      return false;
+    }
+
+    // Definitely removing the pair.
+    this.beginEventDispatcher.dispatchEvent(PAIR_REMOVE, entity, {
+      relation: relationTag,
+      entity: relEntity
+    });
+
+    if (relEntities.length === 1) {
+      delete entity._pairs[relationTag.name];
+    } else {
+      relEntities.splice(relEntities.indexOf(relEntity), 1);
+    }
+
+    if (!immediately) {
+      if (Object.keys(entity._pairsToRemove).length === 0) {
+        this.entitiesWithPairsToRemove.push(entity);
+      }
+      if (entity._pairsToRemove[relationTag.name]) {
+        entity._pairsToRemove[relationTag.name].push(relEntity);
+      } else {
+        entity._pairsToRemove[relationTag.name] = [relEntity];
+      }
+    }
+
+    this.endEventDispatcher.dispatchEvent(PAIR_REMOVE, entity, {
+      relation: relationTag,
+      entity: relEntity
+    });
+
+    return true;
+  }
+
+  /**
+   * 
+   * @param {Entity} entity 
+   * @param {Tag | string} relation 
+   * @param {boolean} [immediately]
+   */
+  entityRemoveRelation(entity, relation, immediately) {
+    let relationTag = this.world._getTagOrError(relation);
+    let objects = entity._pairs[relationTag.name];
+    if (objects !== undefined) {
+      for (let i = objects.length - 1; i >= 0; i--) {
+        let obj = objects[i];
+        this.entityRemovePair(entity, relationTag, obj, immediately);
+      }
+    }
+  }
+
+  /**
+   * 
+   * @param {Entity} entity 
+   * @param {boolean} [immediately]
+   */
+  entityRemoveAllPairs(entity, immediately) {
+    let relations = entity.getAllRelations();
+    for (let i = relations.length - 1; i >= 0; i--) {
+      this.entityRemoveRelation(entity, relations[i], immediately);
     }
   }
 
@@ -419,12 +478,13 @@ export class EntityManager {
       if (this._entitiesByNames[name]) {
         console.warn(`Entity name '${name}' already exists; preserving the old entity`);
       } else {
+        this.beginEventDispatcher.dispatchEvent(ENTITY_CREATED, entity);
         this._entitiesByNames[name] = entity;
       }
     }
 
     this._entities.push(entity);
-    this.eventDispatcher.dispatchEvent(ENTITY_CREATED, entity);
+    this.endEventDispatcher.dispatchEvent(ENTITY_CREATED, entity);
     return entity;
   }
 
@@ -443,16 +503,20 @@ export class EntityManager {
 
     entity.alive = false;
     this.entityRemoveAllComponents(entity, immediately);
+    this.entityRemoveAllTags(entity, immediately);
+    this.entityRemoveAllPairs(entity, immediately);
 
     if (entity.numStateComponents === 0) {
       // Remove from entity list
-      this.eventDispatcher.dispatchEvent(ENTITY_REMOVED, entity);
-      this._queryManager.onEntityRemoved(entity);
+      this.beginEventDispatcher.dispatchEvent(ENTITY_CREATED, entity);
+
       if (immediately === true) {
         this._releaseEntity(entity, index);
       } else {
         this.entitiesToRemove.push(entity);
       }
+
+      this.endEventDispatcher.dispatchEvent(ENTITY_REMOVED, entity);
     }
   }
 
@@ -554,7 +618,8 @@ export class EntityManager {
      *  componentPool: {
      *    [name: string]: ReturnType<ObjectPool["stats"]>
      *  },
-     *  eventDispatcher: EventDispatcher["stats"]
+     *  beginEventDispatcher: EventDispatcher["stats"],
+     *  endEventDispatcher: EventDispatcher["stats"]
      * }}
      */
     var stats = {
@@ -564,7 +629,8 @@ export class EntityManager {
       numComponentPool: Object.keys(this.componentsManager._componentPool)
         .length,
       componentPool: {},
-      eventDispatcher: this.eventDispatcher.stats,
+      beginEventDispatcher: this.beginEventDispatcher.stats,
+      endEventDispatcher: this.endEventDispatcher.stats
     };
 
     for (var ecsyComponentId in this.componentsManager._componentPool) {
@@ -577,11 +643,15 @@ export class EntityManager {
   }
 }
 
-const ENTITY_CREATED = "EntityManager#ENTITY_CREATE";
-const ENTITY_REMOVED = "EntityManager#ENTITY_REMOVED";
-const COMPONENT_ADDED = "EntityManager#COMPONENT_ADDED";
-const COMPONENT_REMOVE = "EntityManager#COMPONENT_REMOVE";
-const TAG_ADDED = "EntityManager#TAG_ADDED";
-const TAG_REMOVE = "EntityManager#TAG_REMOVE";
-const PAIR_ADDED = "EntityManager#PAIR_ADDED";
-const PAIR_REMOVE = "EntityManager#PAIR_REMOVE";
+export const ENTITY_CREATED = "EntityManager#ENTITY_CREATE";
+export const ENTITY_REMOVED = "EntityManager#ENTITY_REMOVED";
+export const COMPONENT_ADDED = "EntityManager#COMPONENT_ADDED";
+export const COMPONENT_REMOVE = "EntityManager#COMPONENT_REMOVE";
+export const TAG_ADDED = "EntityManager#TAG_ADDED";
+export const TAG_REMOVE = "EntityManager#TAG_REMOVE";
+export const PAIR_ADDED = "EntityManager#PAIR_ADDED";
+export const PAIR_REMOVE = "EntityManager#PAIR_REMOVE";
+export const allEventTypes = [
+  ENTITY_CREATED, ENTITY_REMOVED, COMPONENT_ADDED, COMPONENT_REMOVE,
+  TAG_ADDED, TAG_REMOVE, PAIR_ADDED, PAIR_REMOVE
+];

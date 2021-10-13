@@ -141,7 +141,17 @@ export class World {
   }
 
   /**
-   * Get the tag object for a given tag name, if it exists.
+   * Register a new relation or a relation created in another world.
+   * @param {string | import("./Tag").Tag} relationOrName 
+   * @returns 
+   */
+  registerRelation(relationOrName) {
+    this.componentsManager.registerRelation(relationOrName);
+    return this;
+  }
+
+  /**
+   * Get the tag object for a given tag name or relation name, if it exists.
    * @param {string | import("./Tag").Tag} nameOrTag 
    * @param {boolean} [createIfNotFound] If a tag is not found, create a new one and return that.
    * @returns {import("./Tag").Tag?}
@@ -150,7 +160,8 @@ export class World {
     if (typeof nameOrTag === "string") {
       let tag = this.componentsManager.getTag(nameOrTag);
       if (!tag && createIfNotFound) {
-        return this.componentsManager.createTag(nameOrTag);
+        this.componentsManager.registerTag(nameOrTag);
+        return this.componentsManager.getTag(nameOrTag);
       } else {
         return tag;
       }
@@ -160,7 +171,7 @@ export class World {
   }
 
   /**
-   * 
+   * Gets a Tag object that may represent a tag or a relation
    * @param {string | import("./Tag").Tag} nameOrTag 
    * @returns {import("./Tag").Tag}
    */
@@ -183,9 +194,24 @@ export class World {
    */
   hasRegisteredTag(tagOrName) {
     if (typeof tagOrName === "string") {
-      return !!this.componentsManager.getTag(tagOrName);
+      let tag = this.componentsManager.getTag(tagOrName);
+      return !!(tag && !tag.isRelation);
     } else {
-      return this.componentsManager.hasRegisteredTag(tagOrName);
+      return !tagOrName.isRelation && this.componentsManager.hasRegisteredTag(tagOrName);
+    }
+  }
+
+  /**
+   * 
+   * @param {import("./Tag").Tag | string} relation 
+   * @returns 
+   */
+  hasRegisteredRelation(relation) {
+    if (typeof relation === "string") {
+      let relationTag = this.componentsManager.getTag(relation);
+      return !!(relationTag && relationTag.isRelation);
+    } else {
+      return relation.isRelation && this.componentsManager.hasRegisteredTag(relation);
     }
   }
 

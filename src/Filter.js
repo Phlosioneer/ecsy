@@ -27,10 +27,15 @@ export class Filter {
   
       /** @type {Tag[]} */
       this.tags = [];
+      /** @type {Tag[]} */
+      this.relations = [];
       /** @type {import("./Typedefs").ComponentConstructor<any>[]} */
       this.components = [];
+
       /** @type {Tag[]} */
       this.notTags = [];
+      /** @type {Tag[]} */
+      this.notRelations = [];
       /** @type {import("./Typedefs").ComponentConstructor<any>[]} */
       this.notComponents = [];
   
@@ -63,8 +68,10 @@ export class Filter {
         var ids = [];
         this.components.forEach(component => ids.push("" + component._typeId));
         this.tags.forEach(tag => ids.push("" + tag._id));
+        this.relations.forEach(tag => ids.push("" + tag._id));
         this.notComponents.forEach(component =>ids.push("!" + component._typeId));
         this.notTags.forEach(tag => ids.push("!" + tag._id));
+        this.notRelations.forEach(tag => ids.push("!" + tag._id));
   
         this._cachedKey = ids.sort().join("-");
       }
@@ -95,7 +102,7 @@ export class Filter {
         }with unregistered tags: [${this._unregisteredTags.join(", ")}]`);
       }
     
-      if (this.components.length === 0 && this.tags.length === 0) {
+      if (this.components.length === 0 && this.tags.length === 0 && this.relations.length === 0) {
         throw new Error("Tried to create a query with no positive components or tags (Not() components don't count)");
       }
   
@@ -112,7 +119,9 @@ export class Filter {
         entity.hasAllComponents(this.components) &&
         !entity.hasAnyComponents(this.notComponents) &&
         entity.hasAllTags(this.tags) &&
-        !entity.hasAnyTags(this.notTags)
+        !entity.hasAnyTags(this.notTags) &&
+        entity.hasAllRelations(this.relations) &&
+        !entity.hasAnyRelations(this.notRelations)
       );
     }
   
@@ -132,7 +141,11 @@ export class Filter {
       if (typeof term === "string") {
         let tag = this._world.getTag(term);
         if (tag) {
-          inverted ? this.notTags.push(tag) : this.tags.push(tag);
+          if (tag.isRelation) {
+            inverted ? this.notRelations.push(tag) : this.relations.push(tag);
+          } else {
+            inverted ? this.notTags.push(tag) : this.tags.push(tag);
+          }
         } else {
           this._unregisteredTags.push(term);
         }
@@ -146,7 +159,11 @@ export class Filter {
         }
       } else if (term instanceof Tag) {
         if (this._world.hasRegisteredTag(term)) {
-          inverted ? this.notTags.push(term) : this.tags.push(term);
+          if (term.isRelation) {
+            inverted ? this.notRelations.push(term) : this.relations.push(term);
+          } else {
+            inverted ? this.notTags.push(term) : this.tags.push(term);
+          }
         } else {
           this._unregisteredTags.push(term.name);
         }
