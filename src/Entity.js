@@ -1,4 +1,5 @@
 import { Component } from "./Component";
+import { EntityHandle } from "./EntityHandle";
 import environment from "./environment.js";
 import { Query } from "./Query.js";
 import { Tag } from "./Tag";
@@ -113,6 +114,8 @@ export class Entity {
      * @type {import("./EntityManager").EntityPool}
      */
     this._pool = undefined;
+
+    this._cachedHandle = null;
   }
 
   ///////////////////////////////////////////////////////////////////////////
@@ -612,5 +615,16 @@ export class Entity {
    */
   remove(forceImmediate) {
     this._entityManager.removeEntity(this, forceImmediate);
+  }
+
+  /**
+   * 
+   * @returns {import("./EntityHandle").EntityHandleType}
+   */
+  getHandle() {
+    if (!this._cachedHandle) {
+      this._cachedHandle = new EntityHandle(this);
+    }
+    return (/** @type {import("./EntityHandle").EntityHandleType} */ (this._cachedHandle));
   }
 }

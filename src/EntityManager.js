@@ -531,6 +531,7 @@ export class EntityManager {
     if (this._entitiesByNames[entity.name]) {
       delete this._entitiesByNames[entity.name];
     }
+    entity._cachedHandle = null;
     entity._pool.release(entity);
   }
 
