@@ -1,7 +1,8 @@
 import { Component } from "./Component.js";
 import { Entity } from "./Entity.js";
-import { Query, QueryEvents } from "./Query.js";
+import { Query } from "./Query.js";
 import { Filter } from "./Filter.js";
+import { QueryEvents } from "./constants.js";
 
 /**
  * @typedef {{

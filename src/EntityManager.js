@@ -6,6 +6,7 @@ import environment from "./environment.js";
 import { Entity } from "./Entity";
 import { Tag } from "./Tag.js";
 import { EntityHandle } from "./EntityHandle.js";
+import { EntityEvents } from "./constants.js";
 
 /**
  * @extends {ObjectPool<Entity>}
@@ -162,7 +163,7 @@ export class EntityManager {
       return;
     }
 
-    this.beginEventDispatcher.dispatchEvent(COMPONENT_ADDED, entity, Component);
+    this.beginEventDispatcher.dispatchEvent(EntityEvents.componentAdded, entity, Component);
 
     entity._ComponentTypes.push(Component);
 
@@ -183,7 +184,7 @@ export class EntityManager {
     entity._components[Component._typeId] = component;
 
     this.world.componentsManager.componentAddedToEntity(Component);
-    this.endEventDispatcher.dispatchEvent(COMPONENT_ADDED, entity, Component);
+    this.endEventDispatcher.dispatchEvent(EntityEvents.componentAdded, entity, Component);
 
     
   }
@@ -198,7 +199,7 @@ export class EntityManager {
     var index = entity._ComponentTypes.indexOf(Component);
     if (!~index) return;
 
-    this.beginEventDispatcher.dispatchEvent(COMPONENT_REMOVE, entity, Component);
+    this.beginEventDispatcher.dispatchEvent(EntityEvents.componentRemoved, entity, Component);
 
     if (immediately) {
       this._entityRemoveComponentSync(entity, Component, index);
@@ -228,7 +229,7 @@ export class EntityManager {
       }
     }
 
-    this.endEventDispatcher.dispatchEvent(COMPONENT_REMOVE, entity, Component);
+    this.endEventDispatcher.dispatchEvent(EntityEvents.componentRemoved, entity, Component);
   }
 
   /**
@@ -278,7 +279,7 @@ export class EntityManager {
       return;
     }
 
-    this.beginEventDispatcher.dispatchEvent(TAG_ADDED, entity, tag);
+    this.beginEventDispatcher.dispatchEvent(EntityEvents.tagAdded, entity, tag);
     entity._tags.push(tag);
 
     // If the tag was previously removed, delete it from the removed list.
@@ -287,7 +288,7 @@ export class EntityManager {
       entity._tagsToRemove.splice(removedListIndex, 1);
     }
 
-    this.endEventDispatcher.dispatchEvent(TAG_ADDED, entity, tag);
+    this.endEventDispatcher.dispatchEvent(EntityEvents.tagAdded, entity, tag);
   }
 
   /**
@@ -302,7 +303,7 @@ export class EntityManager {
     let index = entity._tags.indexOf(tag);
     if (index === -1) { return; }
 
-    this.beginEventDispatcher.dispatchEvent(TAG_REMOVE, entity, tag);
+    this.beginEventDispatcher.dispatchEvent(EntityEvents.tagRemoved, entity, tag);
 
     if (immediately) {
       entity._tags.splice(index, 1);
@@ -320,7 +321,7 @@ export class EntityManager {
       entity._tagsToRemove.push(tag);
     }
 
-    this.endEventDispatcher.dispatchEvent(TAG_REMOVE, entity, tag);
+    this.endEventDispatcher.dispatchEvent(EntityEvents.tagRemoved, entity, tag);
   }
 
   /**
@@ -362,7 +363,7 @@ export class EntityManager {
       return false;
     }
 
-    this.beginEventDispatcher.dispatchEvent(PAIR_ADDED, entity, {
+    this.beginEventDispatcher.dispatchEvent(EntityEvents.pairAdded, entity, {
       relation: relationTag,
       entity: relEntityOriginal
     });
@@ -373,7 +374,7 @@ export class EntityManager {
       entity._pairs[relationTag.name] = [relEntityHandle];
     }
 
-    this.endEventDispatcher.dispatchEvent(PAIR_ADDED, entity, {
+    this.endEventDispatcher.dispatchEvent(EntityEvents.pairAdded, entity, {
       relation: relationTag,
       entity: relEntityOriginal
     });
@@ -403,7 +404,7 @@ export class EntityManager {
     }
 
     // Definitely removing the pair.
-    this.beginEventDispatcher.dispatchEvent(PAIR_REMOVE, entity, {
+    this.beginEventDispatcher.dispatchEvent(EntityEvents.pairRemoved, entity, {
       relation: relationTag,
       entity: relEntityOriginal
     });
@@ -425,7 +426,7 @@ export class EntityManager {
       }
     }
 
-    this.endEventDispatcher.dispatchEvent(PAIR_REMOVE, entity, {
+    this.endEventDispatcher.dispatchEvent(EntityEvents.pairRemoved, entity, {
       relation: relationTag,
       entity: relEntityOriginal
     });
@@ -486,13 +487,13 @@ export class EntityManager {
       if (this._entitiesByNames[name]) {
         console.warn(`Entity name '${name}' already exists; preserving the old entity`);
       } else {
-        this.beginEventDispatcher.dispatchEvent(ENTITY_CREATED, entity);
+        this.beginEventDispatcher.dispatchEvent(EntityEvents.created, entity);
         this._entitiesByNames[name] = entity;
       }
     }
 
     this._entities.push(entity);
-    this.endEventDispatcher.dispatchEvent(ENTITY_CREATED, entity);
+    this.endEventDispatcher.dispatchEvent(EntityEvents.created, entity);
     return entity;
   }
 
@@ -516,7 +517,7 @@ export class EntityManager {
 
     if (entity.numStateComponents === 0) {
       // Remove from entity list
-      this.beginEventDispatcher.dispatchEvent(ENTITY_CREATED, entity);
+      this.beginEventDispatcher.dispatchEvent(EntityEvents.removed, entity);
 
       if (immediately === true) {
         this._releaseEntity(entity, index);
@@ -524,7 +525,7 @@ export class EntityManager {
         this.entitiesToRemove.push(entity);
       }
 
-      this.endEventDispatcher.dispatchEvent(ENTITY_REMOVED, entity);
+      this.endEventDispatcher.dispatchEvent(EntityEvents.removed, entity);
     }
   }
 
@@ -651,16 +652,3 @@ export class EntityManager {
     return stats;
   }
 }
-
-export const ENTITY_CREATED = "EntityManager#ENTITY_CREATE";
-export const ENTITY_REMOVED = "EntityManager#ENTITY_REMOVED";
-export const COMPONENT_ADDED = "EntityManager#COMPONENT_ADDED";
-export const COMPONENT_REMOVE = "EntityManager#COMPONENT_REMOVE";
-export const TAG_ADDED = "EntityManager#TAG_ADDED";
-export const TAG_REMOVE = "EntityManager#TAG_REMOVE";
-export const PAIR_ADDED = "EntityManager#PAIR_ADDED";
-export const PAIR_REMOVE = "EntityManager#PAIR_REMOVE";
-export const allEventTypes = [
-  ENTITY_CREATED, ENTITY_REMOVED, COMPONENT_ADDED, COMPONENT_REMOVE,
-  TAG_ADDED, TAG_REMOVE, PAIR_ADDED, PAIR_REMOVE
-];

@@ -1,7 +1,7 @@
 import { Component } from "./Component";
 import { EntityHandle } from "./EntityHandle";
 import environment from "./environment.js";
-import { Query } from "./Query.js";
+import { QueryEvents } from "./constants.js";
 import { Tag } from "./Tag";
 import wrapImmutableComponent from "./WrapImmutableComponent.js";
 
@@ -183,7 +183,7 @@ export class Entity {
       // @todo add Not components
       if (query.reactive && query.filter.components.indexOf(Component) !== -1) {
         query.eventDispatcher.dispatchEvent(
-          Query.prototype.COMPONENT_CHANGED,
+          QueryEvents.changed,
           this,
           component
         );

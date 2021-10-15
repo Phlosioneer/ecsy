@@ -1,12 +1,12 @@
+import { QueryEvents } from "./constants.js";
 import { Entity } from "./Entity.js";
-import { EntityManager } from "./EntityManager.js";
 import EventDispatcher from "./EventDispatcher.js";
 import { Filter } from "./Filter.js";
 
 export class Query {
   /**
    * @param {import("./Typedefs").QueryTerm[] | Filter} termsOrFilter List of terms to query
-   * @param {EntityManager} manager
+   * @param {import("./EntityManager").EntityManager} manager
    */
   constructor(termsOrFilter, manager) {
     /**
@@ -48,7 +48,7 @@ export class Query {
     entity.queries.push(this);
     this.entities.push(entity);
 
-    this.eventDispatcher.dispatchEvent(Query.prototype.ENTITY_ADDED, entity);
+    this.eventDispatcher.dispatchEvent(QueryEvents.added, entity);
   }
 
   /**
@@ -64,7 +64,7 @@ export class Query {
       entity.queries.splice(index, 1);
 
       this.eventDispatcher.dispatchEvent(
-        Query.prototype.ENTITY_REMOVED,
+        QueryEvents.removed,
         entity
       );
     }
@@ -101,15 +101,3 @@ export class Query {
   }
 }
 
-Query.prototype.ENTITY_ADDED = "Query#ENTITY_ADDED";
-Query.prototype.ENTITY_REMOVED = "Query#ENTITY_REMOVED";
-Query.prototype.COMPONENT_CHANGED = "Query#COMPONENT_CHANGED";
-
-/**
- * @enum {string}
- */
- export const QueryEvents = {
-  added: Query.prototype.ENTITY_ADDED,
-  removed: Query.prototype.ENTITY_REMOVED,
-  changed: Query.prototype.COMPONENT_CHANGED, // Query.prototype.ENTITY_CHANGED
-};

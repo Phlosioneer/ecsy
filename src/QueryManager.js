@@ -1,6 +1,6 @@
 import { Query } from "./Query.js";
 import { Filter } from "./Filter.js";
-import { COMPONENT_ADDED, COMPONENT_REMOVE, ENTITY_REMOVED, PAIR_ADDED, PAIR_REMOVE, TAG_ADDED, TAG_REMOVE } from "./EntityManager";
+import { EntityEvents } from "./constants.js";
 
 /**
  * @private
@@ -24,9 +24,11 @@ export default class QueryManager {
      */
     this._queries = {};
 
-    manager.endEventDispatcher.addEventListener(ENTITY_REMOVED, this.onEntityRemoved.bind(this));
-    let events = [COMPONENT_ADDED, COMPONENT_REMOVE, TAG_ADDED,
-      TAG_REMOVE, PAIR_ADDED, PAIR_REMOVE]
+    manager.endEventDispatcher.addEventListener(EntityEvents.removed, this.onEntityRemoved.bind(this));
+    let events = [
+      EntityEvents.componentAdded, EntityEvents.componentRemoved,
+      EntityEvents.tagAdded, EntityEvents.tagRemoved,
+      EntityEvents.pairAdded, EntityEvents.pairRemoved]
     events.forEach(eventName => {
       manager.endEventDispatcher.addEventListener(eventName, this._onEntityEvent.bind(this));
     }, this);
