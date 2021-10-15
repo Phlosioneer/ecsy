@@ -5,6 +5,7 @@ import { SystemStateComponent } from "./SystemStateComponent.js";
 import environment from "./environment.js";
 import { Entity } from "./Entity";
 import { Tag } from "./Tag.js";
+import { EntityHandle } from "./EntityHandle.js";
 
 /**
  * @extends {ObjectPool<Entity>}
@@ -341,36 +342,40 @@ export class EntityManager {
    * 
    * @param {Entity} entity 
    * @param {Tag | string} relation 
-   * @param {Entity} relEntity 
+   * @param {Entity | import("./EntityHandle.js").EntityHandleType} relEntity 
    * @returns {boolean} False if the pair already existed
    */
   entityAddPair(entity, relation, relEntity) {
+    
     // TODO: Events!
     let relationTag = this.world._getTagOrError(relation);
     if (!relationTag.isRelation) {
       throw new Error("Cannot use a tag as a relation: " + relationTag.name);
     }
 
+    let relEntityOriginal = relEntity.unwrapHandle();
+    let relEntityHandle = relEntity.getHandle();
+
     let currentRelEntities = entity._pairs[relationTag.name];
-    if (currentRelEntities && currentRelEntities.includes(relEntity)) {
+    if (currentRelEntities && currentRelEntities.includes(relEntityHandle)) {
       // Already in the list
       return false;
     }
 
     this.beginEventDispatcher.dispatchEvent(PAIR_ADDED, entity, {
       relation: relationTag,
-      entity: relEntity
+      entity: relEntityOriginal
     });
 
     if (currentRelEntities) {
-      currentRelEntities.push(relEntity);
+      currentRelEntities.push(relEntityHandle);
     } else {
-      entity._pairs[relationTag.name] = [relEntity];
+      entity._pairs[relationTag.name] = [relEntityHandle];
     }
 
     this.endEventDispatcher.dispatchEvent(PAIR_ADDED, entity, {
       relation: relationTag,
-      entity: relEntity
+      entity: relEntityOriginal
     });
     return true;
   }
@@ -379,7 +384,7 @@ export class EntityManager {
    * 
    * @param {Entity} entity 
    * @param {Tag | string} relation 
-   * @param {Entity} relEntity 
+   * @param {Entity | import("./EntityHandle.js").EntityHandleType} relEntity 
    * @param {boolean} [immediately]
    * @returns {boolean} False if the pair doesn't exist
    */
@@ -388,22 +393,25 @@ export class EntityManager {
     if (!relationTag.isRelation) {
       return false;
     }
+
+    let relEntityOriginal = relEntity.unwrapHandle();
+    let relEntityHandle = relEntity.getHandle();
     
     let relEntities = entity._pairs[relationTag.name];
-    if (!(relEntities && relEntities.includes(relEntity))) {
+    if (!(relEntities && relEntities.includes(relEntityHandle))) {
       return false;
     }
 
     // Definitely removing the pair.
     this.beginEventDispatcher.dispatchEvent(PAIR_REMOVE, entity, {
       relation: relationTag,
-      entity: relEntity
+      entity: relEntityOriginal
     });
 
     if (relEntities.length === 1) {
       delete entity._pairs[relationTag.name];
     } else {
-      relEntities.splice(relEntities.indexOf(relEntity), 1);
+      relEntities.splice(relEntities.indexOf(relEntityHandle), 1);
     }
 
     if (!immediately) {
@@ -411,15 +419,15 @@ export class EntityManager {
         this.entitiesWithPairsToRemove.push(entity);
       }
       if (entity._pairsToRemove[relationTag.name]) {
-        entity._pairsToRemove[relationTag.name].push(relEntity);
+        entity._pairsToRemove[relationTag.name].push(relEntityHandle);
       } else {
-        entity._pairsToRemove[relationTag.name] = [relEntity];
+        entity._pairsToRemove[relationTag.name] = [relEntityHandle];
       }
     }
 
     this.endEventDispatcher.dispatchEvent(PAIR_REMOVE, entity, {
       relation: relationTag,
-      entity: relEntity
+      entity: relEntityOriginal
     });
 
     return true;

@@ -70,7 +70,7 @@ export class Entity {
 
     /**
      * Pairs that the entity has
-     * @type {{ [tagName: string]: Entity[] }}
+     * @type {{ [tagName: string]: import("./EntityHandle").EntityHandleType[] }}
      */
     this._pairs = {};
 
@@ -100,7 +100,7 @@ export class Entity {
 
     /**
      * Entries from `_pairs` that are waiting for deferred removal
-     * @type {{ [tagName: string]: Entity[] }}
+     * @type {{ [tagName: string]: import("./EntityHandle").EntityHandleType[] }}
      */
     this._pairsToRemove = {};
 
@@ -364,10 +364,10 @@ export class Entity {
   /**
    * Returns false if the pair is already on this entity.
    * @param {Tag | string} relation 
-   * @param {Entity} entity 
+   * @param {Entity | import("./EntityHandle").EntityHandleType} entity 
    */
   addPair(relation, entity) {
-    return this._entityManager.entityAddPair(this, relation, entity);
+    return this._entityManager.entityAddPair(this, relation, entity.unwrapHandle());
   }
 
   /**
@@ -376,8 +376,8 @@ export class Entity {
    * false.
    * 
    * @param {Tag | string} relation 
-   * @param {Entity} newEntity
-   * @param {Entity} oldEntity
+   * @param {Entity | import("./EntityHandle").EntityHandleType} newEntity
+   * @param {Entity | import("./EntityHandle").EntityHandleType} oldEntity
    */
   replacePair(relation, newEntity, oldEntity) {
     if (this.removePair(relation, oldEntity)) {
@@ -393,7 +393,8 @@ export class Entity {
    * entityOrEntities.
    * 
    * @param {Tag | string} relation 
-   * @param {Entity | Entity[]} entityOrEntities 
+   * @param {Entity | import("./EntityHandle").EntityHandleType |
+   *   (Entity | import("./EntityHandle").EntityHandleType)[]} entityOrEntities 
    */
   overwritePair(relation, entityOrEntities) {
     this.removeRelation(relation);
@@ -408,7 +409,8 @@ export class Entity {
    * 
    * @param {Tag | string} relation 
    * @param {boolean} [includeRemoved]
-   * @returns {Entity | Entity[] | null}
+   * @returns {import("./EntityHandle").EntityHandleType |
+   *   import("./EntityHandle").EntityHandleType[] | null}
    */
   getRelation(relation, includeRemoved) {
     let relationTag = this._entityManager.world._getTagOrError(relation);
@@ -432,7 +434,8 @@ export class Entity {
   /**
    * 
    * @param {Tag | string} relation 
-   * @returns {Entity | Entity[] | null}
+   * @returns {import("./EntityHandle").EntityHandleType |
+   *   import("./EntityHandle").EntityHandleType[] | null}
    */
   getRemovedRelation(relation) {
     let relationTag = this._entityManager.world._getTagOrError(relation);
@@ -469,7 +472,7 @@ export class Entity {
   /**
    * 
    * @param {Tag | string} relation 
-   * @param {Entity} entity 
+   * @param {Entity | import("./EntityHandle").EntityHandleType} entity 
    * @param {boolean} [forceImmediate]
    */
   removePair(relation, entity, forceImmediate) {
@@ -496,13 +499,13 @@ export class Entity {
   /**
    * 
    * @param {Tag | string} relation 
-   * @param {Entity} relEntity 
+   * @param {Entity | import("./EntityHandle").EntityHandleType} relEntity 
    * @param {boolean} [includeRemoved]
    */
    hasPair(relation, relEntity, includeRemoved) {
     let relationTag = this._entityManager.world._getTagOrError(relation);
     if (this._pairs[relationTag.name]
-          && this._pairs[relationTag.name].includes(relEntity)) {
+          && this._pairs[relationTag.name].includes(relEntity.getHandle())) {
       return true;
     } else if (includeRemoved) {
       return this.hasRemovedPair(relation, relEntity);
@@ -514,12 +517,12 @@ export class Entity {
   /**
    * 
    * @param {Tag | string} relation 
-   * @param {Entity} relEntity 
+   * @param {Entity | import("./EntityHandle").EntityHandleType} relEntity 
    */
   hasRemovedPair(relation, relEntity) {
     let relationTag = this._entityManager.world._getTagOrError(relation);
     return !!(this._pairsToRemove[relationTag.name]
-      && this._pairsToRemove[relationTag.name].includes(relEntity));
+      && this._pairsToRemove[relationTag.name].includes(relEntity.getHandle()));
   }
   
   /**
@@ -627,4 +630,6 @@ export class Entity {
     }
     return (/** @type {import("./EntityHandle").EntityHandleType} */ (this._cachedHandle));
   }
+
+  unwrapHandle() { return this; }
 }

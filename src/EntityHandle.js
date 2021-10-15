@@ -1,6 +1,6 @@
 
 /**
- * @typedef {import("./Entity").Entity & {
+ * @typedef {import("./Entity").Entity & EntityHandle & {
  *   deref: import("./Entity").Entity?,
  *   forceDeref: import("./Entity").Entity
  * }} EntityHandleType
@@ -38,7 +38,7 @@ export class EntityHandle {
     let ret = new Proxy(parent, {
       // @ts-ignore
       pseudoObject: pseudoObject,
-      get: function (target, prop) {
+      get: function (target, prop, proxy) {
         prop = typeof prop === "string" ? prop : prop.toString();
 
         let alive = target.id === pseudoObject.id && target.alive;
@@ -60,6 +60,9 @@ export class EntityHandle {
             } else {
               throw new Error(`Handle cannot be dereferenced: ${describeEntity(target)} is dead`);
             }
+          
+          // Function form of deref
+          case "unwrapHandle": return () => proxy.deref;
           
           // Unsafely get past the proxy
           case "forceDeref": return target;
@@ -103,5 +106,17 @@ export class EntityHandle {
     });
     return ret;
   }
+
+  /**
+   * Dummy function for typechecking
+   * @returns {import("./Entity").Entity}
+   */
+  unwrapHandle() { throw new Error("Unreachable"); }
+
+  /**
+   * Dummy function for typechecking
+   * @returns {EntityHandleType}
+   */
+  getHandle() { throw new Error("Unreachable"); }
 }
 
