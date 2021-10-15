@@ -166,92 +166,6 @@ export function createType(typeDefinition) {
   return /** @type {PropType<T>} */ (typeDefinition);
 }
 
-class EntityRef {
-  /**
-   * @param {Entity} [entity] The initial entity to reference
-   */
-  constructor(entity) {
-    /** @type {number?} */
-    this.targetId = null;
-    /** @type {import("./Entity").Entity?} */
-    this._target = null;
-
-    if (entity) {
-      this.entity = entity;
-    }
-  }
-
-  /**
-   * The referenced entity. Attempting to access a dead entity will always fail.
-   */
-  get entity() {
-    if (this.targetId === null) {
-      return undefined;
-    } else if (this.targetId === this._target.id) {
-      return this._target;
-    } else {
-      if (environment.isDev) {
-        throw new Error("Entity " + this.targetId + " has been removed from world!");
-      } else {
-        return undefined;
-      }
-    }
-  }
-
-  /**
-   * @param {import("./Entity").Entity} newTarget
-   */
-  set entity(newTarget) {
-    if (!newTarget) {
-      this.targetId = null;
-      this._target = null;
-    } else if (newTarget instanceof Entity) {
-      if (newTarget.alive) {
-        this.targetId = newTarget.id;
-        this._target = newTarget;
-      } else {
-        this.targetId = null;
-        this._target = null;
-        if (environment.isDev) {
-          console.warn("EntityRef set to entity that has been removed; using undefined instead " + this.targetId);
-        }
-      }
-    } else {
-      if (environment.isDev) {
-        throw new Error("EntityRef set to a non-entity object!");
-      } else {
-        this.targetId = null;
-        this._target = null;
-      }
-    }
-  }
-
-  /**
-   * Check whether or not the entity is alive.
-   */
-  get alive() {
-    if (this.targetId !== null && this.targetId === this._target.id) {
-      return this._target.alive;
-    } else {
-      return false;
-    }
-  }
-
-  /**
-   * Make `this` a copy of `other`.
-   * @param {EntityRef} other 
-   */
-  copy(other) {
-    this.targetId = other.targetId;
-    this._target = other._target;
-    return this;
-  }
-
-  clone() {
-    return new EntityRef().copy(this);
-  }
-}
-
 /**
  * Standard types
  */
@@ -330,18 +244,4 @@ export const Types = {
     copy: copyJSON,
     clone: cloneJSON,
   }),
-
-  /**
-   * Safely stores an Entity. The EntityRef will keep track of the entity's unique
-   * id and will throw an error when accessing an entity that has been removed and
-   * reused.
-   * 
-   * @type {PropType<EntityRef>}
-   */
-  Entity: createType({
-    name: "Entity",
-    default: new EntityRef(),
-    copy: copyCopyable,
-    clone: cloneClonable,
-  })
 };
