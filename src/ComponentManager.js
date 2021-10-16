@@ -6,12 +6,12 @@ export class ComponentManager {
   
   constructor() {
     /**
-     * @type {import("./Typedefs").ComponentConstructor<any>[]}
+     * @type {import("./constants").ComponentConstructor<any>[]}
      */
     this.Components = [];
 
     /**
-     * @type {{[typeId: number]: import("./Typedefs").ComponentConstructor<any>}}
+     * @type {{[typeId: number]: import("./constants").ComponentConstructor<any>}}
      */
     this._ComponentsMap = {};
 
@@ -39,7 +39,7 @@ export class ComponentManager {
 
   /**
    * 
-   * @param {import("./Typedefs").ComponentConstructor<any>} Component 
+   * @param {import("./constants").ComponentConstructor<any>} Component 
    */
   hasComponent(Component) {
     return this.Components.indexOf(Component) !== -1;
@@ -47,7 +47,7 @@ export class ComponentManager {
 
   /**
    * @template {Component} C
-   * @param {import("./Typedefs").ComponentConstructor<C>} Component 
+   * @param {import("./constants").ComponentConstructor<C>} Component 
    * @param {ObjectPool<C> | false} [objectPool]
    */
   registerComponent(Component, objectPool) {
@@ -96,7 +96,7 @@ export class ComponentManager {
 
   /**
    * 
-   * @param {import("./Typedefs").ComponentConstructor<any>} Component 
+   * @param {import("./constants").ComponentConstructor<any>} Component 
    */
   componentAddedToEntity(Component) {
     this.numComponents[Component._typeId]++;
@@ -104,7 +104,7 @@ export class ComponentManager {
 
   /**
    * 
-   * @param {import("./Typedefs").ComponentConstructor<any>} Component 
+   * @param {import("./constants").ComponentConstructor<any>} Component 
    */
   componentRemovedFromEntity(Component) {
     this.numComponents[Component._typeId]--;
@@ -112,7 +112,7 @@ export class ComponentManager {
 
   /**
    * @template {Component} C
-   * @param {import("./Typedefs").ComponentConstructor<C>} Component 
+   * @param {import("./constants").ComponentConstructor<C>} Component 
    * @returns {ObjectPool<C>?}
    */
   getComponentsPool(Component) {
@@ -184,7 +184,7 @@ export class ComponentManager {
 
   /**
    * 
-   * @param {import ("./Tag").Tag} tag 
+   * @param {import("./Tag").Tag} tag 
    * @returns 
    */
   hasRegisteredTag(tag) {

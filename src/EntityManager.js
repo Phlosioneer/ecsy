@@ -138,7 +138,7 @@ export class EntityManager {
   /**
    * Add a component to an entity
    * @param {Entity} entity Entity where the component will be added
-   * @param {import("./Typedefs").ComponentConstructor<any>} Component Component to be added to the entity
+   * @param {import("./constants").ComponentConstructor<any>} Component Component to be added to the entity
    * @param {object} [values] Optional values to replace the default attributes
    */
   entityAddComponent(entity, Component, values) {
@@ -192,7 +192,7 @@ export class EntityManager {
   /**
    * Remove a component from an entity
    * @param {Entity} entity Entity which will get removed the component
-   * @param {import("./Typedefs").ComponentConstructor<any>} Component Component to remove from the entity
+   * @param {import("./constants").ComponentConstructor<any>} Component Component to remove from the entity
    * @param {boolean} [immediately] If you want to remove the component immediately instead of deferred (Default is false)
    */
   entityRemoveComponent(entity, Component, immediately) {
@@ -235,7 +235,7 @@ export class EntityManager {
   /**
    * 
    * @param {Entity} entity 
-   * @param {import("./Typedefs").ComponentConstructor<any>} Component 
+   * @param {import("./constants").ComponentConstructor<any>} Component 
    * @param {number} index 
    */
   _entityRemoveComponentSync(entity, Component, index) {
@@ -599,7 +599,7 @@ export class EntityManager {
 
   /**
    * Get a query based on a list of components
-   * @param {import("./Typedefs").QueryTerm[] | import("./Filter").Filter} termsOrFilter List of components that will form the query
+   * @param {import("./constants").QueryTerm[] | import("./Filter").Filter} termsOrFilter List of components that will form the query
    * @param {boolean} [createIfNotFound]
    */
   getQueryByComponents(termsOrFilter, createIfNotFound) {
@@ -645,7 +645,7 @@ export class EntityManager {
 
     for (var ecsyComponentId in this.componentsManager._componentPool) {
       var pool = this.componentsManager._componentPool[ecsyComponentId];
-      let componentType = (/** @type {import("./Typedefs").ComponentConstructor<any>} */ (pool.Type));
+      let componentType = (/** @type {import("./constants").ComponentConstructor<any>} */ (pool.Type));
       stats.componentPool[componentType.getName()] = pool.stats();
     }
 

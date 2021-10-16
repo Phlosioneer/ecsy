@@ -5,8 +5,8 @@ import { Tag } from "./Tag";
  * Use the Not pseudo-class to negate a component query.
  * 
  * @template {import("./Component").Component} C
- * @param {import("./Typedefs").QueryTerm} term
- * @returns {import("./Typedefs").NotTerm}
+ * @param {import("./constants").QueryTerm} term
+ * @returns {import("./constants").NotTerm}
  */
  export function Not(term) {
   return {
@@ -18,7 +18,7 @@ import { Tag } from "./Tag";
 export class Filter {
     /**
    * Parse an array of mixed terms into split arrays.
-   * @param {import("./Typedefs").QueryTerm[]} terms 
+   * @param {import("./constants").QueryTerm[]} terms 
    * @param {import("./World").World} world 
    */
     constructor(terms, world) {
@@ -29,14 +29,14 @@ export class Filter {
       this.tags = [];
       /** @type {Tag[]} */
       this.relations = [];
-      /** @type {import("./Typedefs").ComponentConstructor<any>[]} */
+      /** @type {import("./constants").ComponentConstructor<any>[]} */
       this.components = [];
 
       /** @type {Tag[]} */
       this.notTags = [];
       /** @type {Tag[]} */
       this.notRelations = [];
-      /** @type {import("./Typedefs").ComponentConstructor<any>[]} */
+      /** @type {import("./constants").ComponentConstructor<any>[]} */
       this.notComponents = [];
   
       /** @type {string[]} */
@@ -134,7 +134,7 @@ export class Filter {
     }
   
     /**
-     * @param {import("./Typedefs").QueryTerm} term
+     * @param {import("./constants").QueryTerm} term
      * @param {boolean} [inverted]
      */
     _parseTerm(term, inverted) {

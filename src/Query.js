@@ -5,7 +5,7 @@ import { Filter } from "./Filter.js";
 
 export class Query {
   /**
-   * @param {import("./Typedefs").QueryTerm[] | Filter} termsOrFilter List of terms to query
+   * @param {import("./constants").QueryTerm[] | Filter} termsOrFilter List of terms to query
    * @param {import("./EntityManager").EntityManager} manager
    */
   constructor(termsOrFilter, manager) {

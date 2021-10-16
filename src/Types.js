@@ -10,9 +10,6 @@
  * }} PropType<T,D>
  */
 
-import { Entity } from "./Entity";
-import environment from "./environment";
-
 /**
  * @typedef {string} QueryKey
  */

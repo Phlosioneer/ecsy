@@ -6,7 +6,7 @@ import { QueryEvents } from "./constants.js";
 
 /**
  * @typedef {{
- *  [queryName: string]: import("./Typedefs").QueryDef
+ *  [queryName: string]: import("./constants").QueryDef
  * } | {}} SystemQueryDefs
  */
 
@@ -102,7 +102,7 @@ export class System {
   /**
    * 
    * @param {string} queryName 
-   * @param {import("./Typedefs").QueryDef} queryConfig 
+   * @param {import("./constants").QueryDef} queryConfig 
    */
   _createQuery(queryName, queryConfig) {
     var terms = queryConfig.components;
@@ -152,7 +152,7 @@ export class System {
    * 
    * @param {Query} query 
    * @param {string} queryName 
-   * @param {boolean | import("./Typedefs").ComponentConstructor<any>[]} config 
+   * @param {boolean | import("./constants").ComponentConstructor<any>[]} config 
    */
   _registerChangedEventListener(query, queryName, config) {
     query.reactive = true;
@@ -177,7 +177,7 @@ export class System {
         (dispatcher, eventName, entity, changedComponent) => {
           // Avoid duplicates
           if (
-            config.includes(/** @type{import("./Typedefs").ComponentConstructor<any>} */ (changedComponent.constructor)) &&
+            config.includes(/** @type{import("./constants").ComponentConstructor<any>} */ (changedComponent.constructor)) &&
             !eventList.includes(entity)
           ) {
             eventList.push(entity);

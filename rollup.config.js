@@ -1,4 +1,18 @@
 
+// Matches import(...).
+let jsDocImportRegex = /import\([^)]*\)\./g;
+
+let jsDocFixer = {
+  name: "js-doc-fixer",
+  /** @type {(code: string, id: string) => {code: string, map: null}} */
+  transform: (code, id) => {
+    return {
+      code: code.replaceAll(jsDocImportRegex, ""),
+      map: null
+    };
+  }
+};
+
 export default [
   {
     input: "src/index.js",
@@ -15,6 +29,10 @@ export default [
         file: "build/ecsy.module.js",
         indent: "\t"
       }
-    ]
-  }
+    ],
+    plugins: [jsDocFixer],
+    treeshake: false
+  },
+  
 ];
+

@@ -78,7 +78,7 @@ export class World {
   /**
    * Register a component class.
    * @template {import("./Component").Component} C
-   * @param {import("./Typedefs").ComponentConstructor<C>} Component 
+   * @param {import("./constants").ComponentConstructor<C>} Component 
    * @param {import("./ObjectPool").ObjectPool<C> | false} [objectPool]
    */
   registerComponent(Component, objectPool) {
@@ -88,7 +88,7 @@ export class World {
 
   /**
    * Check whether a component class has been registered to this world.
-   * @param {import("./Typedefs").ComponentConstructor<any>} Component 
+   * @param {import("./constants").ComponentConstructor<any>} Component 
    */
    hasRegisteredComponent(Component) {
     return this.componentsManager.hasComponent(Component);
@@ -273,7 +273,7 @@ export class World {
 
   /**
    * 
-   * @param {import("./Typedefs").QueryTerm[]} components 
+   * @param {import("./constants").QueryTerm[]} components 
    */
   filter(components) {
     return new Filter(components, this).findAll();

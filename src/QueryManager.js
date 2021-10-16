@@ -73,7 +73,7 @@ export default class QueryManager {
   /**
    * Callback when a component is removed from an entity
    * @param {import("./Entity").Entity} entity Entity to remove the component from
-   * @param {import("./Typedefs").ComponentConstructor<any>} Component Component to remove from the entity
+   * @param {import("./constants").ComponentConstructor<any>} Component Component to remove from the entity
    */
   onEntityComponentRemoved(entity, Component) {
     for (var queryName in this._queries) {
@@ -101,7 +101,7 @@ export default class QueryManager {
 
   /**
    * Get a query for the specified components
-   * @param {import("./Typedefs").QueryTerm[] | Filter} termsOrFilter Components that the query should have
+   * @param {import("./constants").QueryTerm[] | Filter} termsOrFilter Components that the query should have
    * @param {boolean} [createIfNotFound]
    */
   getQuery(termsOrFilter, createIfNotFound) {
