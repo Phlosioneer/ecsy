@@ -409,8 +409,7 @@ export class Entity {
    * 
    * @param {Tag | string} relation 
    * @param {boolean} [includeRemoved]
-   * @returns {import("./EntityHandle").EntityHandleType |
-   *   import("./EntityHandle").EntityHandleType[] | null}
+   * @returns {import("./EntityHandle").EntityHandleType[]?}
    */
   getRelation(relation, includeRemoved) {
     let relationTag = this._entityManager.world._getTagOrError(relation);
@@ -424,8 +423,6 @@ export class Entity {
 
     if (ret.length === 0) {
       return null;
-    } else if (ret.length === 1) {
-      return ret[0];
     } else {
       return ret;
     }
@@ -434,18 +431,53 @@ export class Entity {
   /**
    * 
    * @param {Tag | string} relation 
-   * @returns {import("./EntityHandle").EntityHandleType |
-   *   import("./EntityHandle").EntityHandleType[] | null}
+   * @returns {import("./EntityHandle").EntityHandleType[]?}
    */
   getRemovedRelation(relation) {
     let relationTag = this._entityManager.world._getTagOrError(relation);
     let entities = this._pairsToRemove[relationTag.name];
     if (entities === undefined) {
       return null;
-    } else if (entities.length == 1) {
-      return entities[0];
     } else {
       return entities;
+    }
+  }
+
+  /**
+   * If there are more than one pairs, throws an error
+   * @param {Tag | string} relation 
+   * @param {boolean} [includeRemoved]
+   * @returns {import("./EntityHandle").EntityHandleType?}
+   */
+  getPair(relation, includeRemoved) {
+    let ret = this.getRelation(relation, includeRemoved);
+    if (ret) {
+      if (ret.length == 1) {
+        return ret[0];
+      } else {
+        throw new Error("More than one pair for relation '" + relation + "'");
+      }
+    } else {
+      return null;
+    }
+  }
+
+  
+  /**
+   * If there are more than one pairs, throws an error
+   * @param {Tag | string} relation 
+   * @returns {import("./EntityHandle").EntityHandleType?}
+   */
+  getRemovedPair(relation) {
+    let ret = this.getRemovedRelation(relation);
+    if (ret) {
+      if (ret.length == 1) {
+        return ret[0];
+      } else {
+        throw new Error("More than one pair for relation '" + relation + "'");
+      }
+    } else {
+      return null;
     }
   }
 
@@ -523,6 +555,18 @@ export class Entity {
     let relationTag = this._entityManager.world._getTagOrError(relation);
     return !!(this._pairsToRemove[relationTag.name]
       && this._pairsToRemove[relationTag.name].includes(relEntity.getHandle()));
+  }
+
+  /**
+   * 
+   * @param {Tag | string} relation 
+   */
+  hasRelation(relation) {
+    let relationTag = this._entityManager.world._getTagOrError(relation);
+    if (!relationTag.isRelation) {
+      throw new Error("Cannot check for tags in hasAllRelations");
+    }
+    return !!this._pairs[relationTag.name];
   }
   
   /**
