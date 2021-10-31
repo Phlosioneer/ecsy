@@ -63,6 +63,9 @@ export class EntityHandle {
           
           // Function form of deref
           case "unwrapHandle": return () => proxy.deref;
+
+          // Make sure that getHandle always works
+          case "getHandle": return () => proxy;
           
           // Unsafely get past the proxy
           case "forceDeref": return target;
