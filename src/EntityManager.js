@@ -395,7 +395,6 @@ export class EntityManager {
       return false;
     }
 
-    let relEntityOriginal = relEntity.unwrapHandle();
     let relEntityHandle = relEntity.getHandle();
     
     let relEntities = entity._pairs[relationTag.name];
@@ -406,7 +405,7 @@ export class EntityManager {
     // Definitely removing the pair.
     this.beginEventDispatcher.dispatchEvent(EntityEvents.pairRemoved, entity, {
       relation: relationTag,
-      entity: relEntityOriginal
+      entity: relEntityHandle
     });
 
     if (relEntities.length === 1) {
@@ -428,7 +427,7 @@ export class EntityManager {
 
     this.endEventDispatcher.dispatchEvent(EntityEvents.pairRemoved, entity, {
       relation: relationTag,
-      entity: relEntityOriginal
+      entity: relEntityHandle
     });
 
     return true;

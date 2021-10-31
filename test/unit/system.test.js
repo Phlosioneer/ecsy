@@ -276,7 +276,7 @@ test("Queries with sync removal", (t) => {
     systemB.execute(0, 0);
   });
 
-  t.is(error.message, "Cannot read property 'remove' of undefined");
+  t.is(error.message, "Cannot read properties of undefined (reading \'remove\')");
 
   // Just removed half because of the sync update of the array that throws an exception
   t.is(entitiesB.length, 2);
