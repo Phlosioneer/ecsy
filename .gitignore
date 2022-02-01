@@ -1,6 +1,6 @@
 # Generated files
 lib
-build
+#build
 site/build/
 site/docs/README.md
 site/docs/api/
