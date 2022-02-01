@@ -4,6 +4,23 @@ import { loggerSetup, setConsole } from "../helpers/loggerSetup";
 
 loggerSetup();
 
+test("check for unregistered components", (t) => {
+  setConsole(t);
+  const world = new World();
+  const testEntity = world.createEntity();
+  class MyComponent extends Component {}
+
+  // Component not registered to any world
+  const err =  t.throws(() => testEntity.addComponent(MyComponent));
+  t.is(err.message, "Attempted to add unregistered component \"MyComponent\"");
+
+  // Component registered to a world, but not this one
+  const world2 = new World();
+  world2.registerComponent(MyComponent);
+  const err2 = t.throws(() => testEntity.addComponent(MyComponent));
+  t.is(err2.message, "Attempted to add unregistered component \"MyComponent\"");
+});
+
 test("entity id", (t) => {
   setConsole(t);
   var world = new World();

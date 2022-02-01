@@ -144,7 +144,7 @@ export class EntityManager {
   entityAddComponent(entity, Component, values) {
     // @todo Probably define Component._typeId with a default value and avoid using typeof
     if (
-      typeof Component._typeId !== "undefined" &&
+      typeof Component._typeId === "undefined" ||
       !this.world.componentsManager._ComponentsMap[Component._typeId]
     ) {
       throw new Error(
